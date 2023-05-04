@@ -2,3 +2,96 @@
 
 ## Introduction
 FicImage is an application designed to enhance the reading experience of FicHub epubs. With FicImage, users can easily add missing images to their FicHub epubs, bringing the stories to life with vibrant visuals. This user-friendly tool allows readers to fully immerse themselves in their favorite fan fiction stories and enjoy them in a whole new way.
+
+## How to Use
+
+### Installation
+1. Download FicImage by cloning this repo.
+2. Install the dependencies using `pip install -r requirements.txt`.
+3. Run the program using `python3 ficimage.py path/to/epub` where `path/to/epub` is the path to the **FicHub** epub you want to add images to.
+4. Enjoy your new and improved epub!
+
+### Image Support
+
+FicImage creates EPUB 3.3 files, which means that FicImage only save images 
+in the following file format:
+- JPEG (JPG/JFIF)
+- PNG
+- GIF
+- WEBP
+- SVG
+
+See the [Core Media Types Section of the EPUB Version 3.3 Specification](https://www.w3.org/TR/epub-33/#sec-core-media-types) for more information.
+
+While FicImage can save SVG images, it can not compress them because SVGs are not supported by Pillow.
+
+FicImage uses [Pillow](https://pillow.readthedocs.io/en/stable/index.html) for image manipulation and conversion. 
+
+By default, FicImage will try and save all non-animated images as JPEG.
+
+The only animated images that FicImage will save are GIFs and WEBPs.
+
+FicImage does little to no processing on GIFs and WEBPs images. 
+This is to avoid breaking the animation.
+
+To configure image support, you will need to create a file called `ficimage.json`. 
+See the section below for more information.
+
+
+### Configuration
+FicImage comes with a configuration file that allows you to customize the program to your liking.
+
+The configuration file is in the [JSON file format](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON) 
+and contains the following options:
+
+
+- `compress_images`: A boolean that tells FicImage whether to compress images. 
+    This is only supported for `jpeg` and `png` images.
+- `default_image_format`: A string that tells FicImage what format to convert and save images in. 
+    This is only supported for `jpeg`, and `png` images.
+- `max_image_size`: An integer that tells FicImage the maximum size of an image in bytes. 
+    If an image is larger than this value, FicImage will compress it.
+
+
+FicImage checks for a configuration file in its directory. 
+If it does not find one, it uses the following defaults:
+    
+```json
+{
+    "compress_images": true,
+    "default_image_format": "JPEG",
+    "max_image_size": 1000000
+}
+```
+
+> Note: The `compress_images` key is a boolean and can only be `true` or `false`. 
+> Booleans in JSON are written in lowercase.
+
+> Note: If the `default_image_format` key does not exist, FicImage will default to `jpeg`.
+> The three image formats are `jpeg`, and `png`. 
+> The `default_image_format` key is case-insensitive.
+
+> Note: The `compress_images` key tells FicImage to compress images. 
+> This is only supported for `jpeg` and `png` images.
+> This also goes hand-in-hand with the `max_image_size` key. 
+> If the `compress_images` key is `true` but there's no `max_image_size` key,
+> FicImage will compress the image to a size less than 1MB (1000000 bytes). 
+> If the `max_image_size` key is present, FicImage will compress the image
+> to a size less than the value of the `max_image_size` key. 
+> The `max_image_size` key is in bytes.
+
+> If `compress_images` is `false`, FicImage will ignore the `max_image_size` key.
+
+> Warning: Compressing images might make the image quality worse.
+
+> Warning: `max_image_size` is not a hard limit. FicImage will try to compress the
+> image to the size of the `max_image_size` key, but it might
+> not be able to compress the image to the exact size of the `max_image_size` key.
+
+> Warning: `max_image_size` should not be too small. 
+> For instance, if you set `max_image_size` to 1000, FicImage will 
+> probably not be able to compress the image to 1000 bytes. 
+> If you set `max_image_size` to 1000000, FicImage will probably be able to
+> compress the image to 1000000 bytes.
+
+> Warning: FicImage will not compress GIFs or WEBPs, that might damage the animation.
