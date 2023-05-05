@@ -105,6 +105,15 @@ If it does not find one, it uses the following defaults:
 > Warning: FicImage will not compress GIFs or WEBPs, that might damage the animation.
 
 
+## TODO
+- [ ] Conversion to other FicHub supported formats from ePub.
+- [ ] More testing ???
+
+
+## Contributing
+Fork the repo and get started!
+
+
 ## Links
 
 - Me
