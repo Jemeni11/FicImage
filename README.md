@@ -8,7 +8,9 @@ FicImage is an application designed to enhance the reading experience of FicHub 
 ### Installation
 1. Download FicImage by cloning this repo.
 2. Install the dependencies using `pip install -r requirements.txt`.
-3. Run the program using `python3 ficimage.py path/to/epub` where `path/to/epub` is the path to the **FicHub** epub you want to add images to.
+3. Run the program using `python3 ficimage.py path/to/epub path/to/ficimage/json` where `path/to/epub` is the
+path to the **FicHub epub** you want to add images to and `path/to/ficimage/json` is the path to a file called
+**ficimage.json** . ficimage.json lets you configure FicImage. See more [below](#configuration).
 4. Enjoy your new and improved epub!
 
 ### Image Support
@@ -53,7 +55,11 @@ and contains the following options:
     If an image is larger than this value, FicImage will compress it.
 
 
-FicImage checks for a configuration file in its directory. 
+FicImage checks for a configuration file in the given directory path. If no directory 
+path is given, FicImage checks the current directory and then the Operating System's 
+home directory.
+
+
 If it does not find one, it uses the following defaults:
     
 ```json
@@ -97,16 +103,16 @@ If it does not find one, it uses the following defaults:
 > Warning: FicImage will not compress GIFs or WEBPs, that might damage the animation.
 
 
-
 ## Links
 
 - Me
   
-    [LinkedIn](https://www.linkedin.com/in/emmanuel-jemeni) • [GitHub](https://github.com/Jemeni11) • [Twitter](https://twitter.com/Jemeni11_).
+    [LinkedIn](https://www.linkedin.com/in/emmanuel-jemeni) • [GitHub](https://github.com/Jemeni11) • [Twitter](https://twitter.com/Jemeni11_)
 
 - FicHub
 
   Without FicHub, this project would (obviously lol) not exist.
+
   [Website](https://fichub.net/) • [GitHub](https://github.com/FicHub/fichub.net) • [Discord](https://discord.gg/sByBAhX)
 
   Thanks to [iris](https://github.com/iridescent-beacon) for helping me with this project as well.
