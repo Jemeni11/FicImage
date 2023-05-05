@@ -36,6 +36,9 @@ The only animated images that FicImage will save are GIFs and WEBPs.
 FicImage does little to no processing on GIFs and WEBPs images. 
 This is to avoid breaking the animation.
 
+If FicImage can not download an image, it leaves the image url 
+paragraph the same way it met it.
+
 To configure image support, you will need to create a file called `ficimage.json`. 
 See the section below for more information.
 
@@ -58,7 +61,6 @@ and contains the following options:
 FicImage checks for a configuration file in the given directory path. If no directory 
 path is given, FicImage checks the current directory and then the Operating System's 
 home directory.
-
 
 If it does not find one, it uses the following defaults:
     
