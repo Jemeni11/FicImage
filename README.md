@@ -29,7 +29,7 @@ While FicImage can save SVG images, it can not compress them because SVGs are no
 
 FicImage uses [Pillow](https://pillow.readthedocs.io/en/stable/index.html) for image manipulation and conversion. 
 
-By default, FicImage will try and save all non-animated images as JPEG.
+By default, FicImage will try and save all non-animated images as JPEGs.
 
 The only animated images that FicImage will save are GIFs and WEBPs.
 
@@ -52,8 +52,7 @@ and contains the following options:
 
 - `compress_images`: A boolean that tells FicImage whether to compress images. 
     This is only supported for `jpeg` and `png` images.
-- `default_image_format`: A string that tells FicImage what format to convert and save images in. 
-    This is only supported for `jpeg`, and `png` images.
+- `default_image_format`: A string that tells FicImage what default format to convert and save images in. This is only supported for `jpeg` and `png` images.
 - `max_image_size`: An integer that tells FicImage the maximum size of an image in bytes. 
     If an image is larger than this value, FicImage will compress it.
 
@@ -76,7 +75,7 @@ If it does not find one, it uses the following defaults:
 > Booleans in JSON are written in lowercase.
 
 > Note: If the `default_image_format` key does not exist, FicImage will default to `jpeg`.
-> The three image formats are `jpeg`, and `png`. 
+> The two image formats are `jpeg` and `png`. 
 > The `default_image_format` key is case-insensitive.
 
 > Note: The `compress_images` key tells FicImage to compress images. 
