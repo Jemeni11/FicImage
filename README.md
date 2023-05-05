@@ -95,3 +95,18 @@ If it does not find one, it uses the following defaults:
 > compress the image to 1000000 bytes.
 
 > Warning: FicImage will not compress GIFs or WEBPs, that might damage the animation.
+
+
+
+## Links
+
+- Me
+  
+    [LinkedIn](https://www.linkedin.com/in/emmanuel-jemeni) • [GitHub](https://github.com/Jemeni11) • [Twitter](https://twitter.com/Jemeni11_).
+
+- FicHub
+
+  Without FicHub, this project would (obviously lol) not exist.
+  [Website](https://fichub.net/) • [GitHub](https://github.com/FicHub/fichub.net) • [Discord](https://discord.gg/sByBAhX)
+
+  Thanks to [iris](https://github.com/iridescent-beacon) for helping me with this project as well.
