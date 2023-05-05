@@ -1,5 +1,5 @@
 {
   "compress_images": true,
   "default_image_format": "JPEG",
-  "max_image_size": 60000
+  "max_image_size": 100000
 }
