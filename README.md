@@ -60,7 +60,7 @@ If it does not find one, it uses the following defaults:
 {
     "compress_images": true,
     "default_image_format": "JPEG",
-    "max_image_size": 1000000
+    "max_image_size": 100000
 }
 ```
 
