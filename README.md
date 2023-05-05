@@ -15,7 +15,7 @@ path to the **FicHub epub** you want to add images to and `path/to/ficimage/json
 
 ### Image Support
 
-FicImage creates EPUB 3.3 files, which means that FicImage only save images 
+[FicHub](https://fichub.net/) creates EPUB 3.3 files, which means that FicImage only save images 
 in the following file format:
 - JPEG (JPG/JFIF)
 - PNG
