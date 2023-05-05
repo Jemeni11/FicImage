@@ -22,6 +22,9 @@ def main(path_to_epub: str, config_file_path: str = None) -> None:
 			ficimage_config = load_config_json(config_file_location)
 		else:
 			ficimage_config = default_ficimage_settings()
+		compress_images_config: bool = ficimage_config.get("compress_images")
+		default_image_format_config: str = ficimage_config.get("default_image_format")
+		max_image_size_config: int = ficimage_config.get("max_image_size")
 		
 		file_name = path_to_epub.split('/')[-1].split('.')[0]
 		
@@ -50,7 +53,12 @@ def main(path_to_epub: str, config_file_path: str = None) -> None:
 									image_content,
 									image_extension,
 									image_media_type
-								) = get_image_from_url(url=image_link, ficimage_config=ficimage_config)
+								) = get_image_from_url(
+									url=image_link,
+									image_format=default_image_format_config,
+									compress_images=compress_images_config,
+									max_image_size=max_image_size_config
+								)
 								image_path = f"images/" \
 								             f"{item_file_name}_image_{images.index(image)}.{image_extension.lower()}"
 								new_image = f"<img alt='Image {images.index(image)} from {item.file_name}' " \
