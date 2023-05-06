@@ -22,11 +22,11 @@ def main(path_to_epub: str, config_file_path: str = None) -> None:
 			ficimage_config = load_config_json(config_file_location)
 		else:
 			ficimage_config = default_ficimage_settings()
-		compress_images_config: bool = ficimage_config.get("compress_images")
-		default_image_format_config: str = ficimage_config.get("default_image_format")
-		if default_image_format_config.lower() not in ("jpg", "jpeg", "png"):
+		compress_images_config: bool = ficimage_config.get("compress_images", True)
+		default_image_format_config: str = ficimage_config.get("default_image_format", "JPEG")
+		if str(default_image_format_config).lower() not in ("jpg", "jpeg", "png"):
 			default_image_format_config = "JPEG"
-		max_image_size_config: int = ficimage_config.get("max_image_size")
+		max_image_size_config: int = ficimage_config.get("max_image_size", 1_000_000)
 		
 		file_name = path_to_epub.split('/')[-1].split('.')[0]
 		
