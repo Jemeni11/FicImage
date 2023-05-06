@@ -24,6 +24,8 @@ def main(path_to_epub: str, config_file_path: str = None) -> None:
 			ficimage_config = default_ficimage_settings()
 		compress_images_config: bool = ficimage_config.get("compress_images")
 		default_image_format_config: str = ficimage_config.get("default_image_format")
+		if default_image_format_config.lower() not in ("jpg", "jpeg", "png"):
+			default_image_format_config = "JPEG"
 		max_image_size_config: int = ficimage_config.get("max_image_size")
 		
 		file_name = path_to_epub.split('/')[-1].split('.')[0]
