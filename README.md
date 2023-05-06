@@ -17,7 +17,7 @@ path to the **FicHub epub** you want to add images to and `path/to/ficimage/json
 
 [FicHub](https://fichub.net/) creates EPUB 3.3 files, which means that FicImage only save images 
 in the following file format:
-- JPEG (JPG/JFIF)
+- JPEG
 - PNG
 - GIF
 - WEBP
@@ -96,10 +96,10 @@ If it does not find one, it uses the following defaults:
 > not be able to compress the image to the exact size of the `max_image_size` key.
 
 > Warning: `max_image_size` should not be too small. 
-> For instance, if you set `max_image_size` to 1000, FicImage will 
-> probably not be able to compress the image to 1000 bytes. 
-> If you set `max_image_size` to 1000000, FicImage will probably be able to
-> compress the image to 1000000 bytes.
+> For instance, if you set `max_image_size` to 1 000, FicImage will 
+> probably not be able to compress the image to 1 000 bytes (1 KB). 
+> If you set `max_image_size` to 1 000 000, FicImage will probably be able to
+> compress the image to 1 000 000 bytes (1 MB).
 
 > Warning: FicImage will not compress GIFs or WEBPs, that might damage the animation.
 
