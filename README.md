@@ -1,17 +1,34 @@
-# FicImage
+# FicImage/FicImageScript
 
 ## Introduction
 FicImage is an application designed to enhance the reading experience of FicHub epubs. With FicImage, users can easily add missing images to their FicHub epubs, bringing the stories to life with vibrant visuals. This user-friendly tool allows readers to fully immerse themselves in their favorite fan fiction stories and enjoy them in a whole new way.
 
 ## How to Use
 
-### Installation
-1. Download FicImage by cloning this repo.
-2. Install the dependencies using `pip install -r requirements.txt`.
-3. Run the program using `python3 ficimage.py path/to/epub path/to/ficimage/json` where `path/to/epub` is the
-path to the **FicHub epub** you want to add images to and `path/to/ficimage/json` is the path to a file called
-**ficimage.json** . ficimage.json lets you configure FicImage. See more [below](#configuration).
-4. Enjoy your new and improved epub!
+### Installation with PIP
+1. Install FicImage using `pip install FicImageScript`.
+2.  After installation, run the program using `ficimage path/to/epub -c path/to/ficimage/json` 
+where `path/to/epub` is the path to the **FicHub epub** you want to add 
+images to and `path/to/ficimage/json` is the path to a file called **ficimage.json** . 
+ficimage.json lets you configure FicImage. See more [below](#configuration).
+
+
+```shell
+(virt) nonso@HPEnvy:~/Documents/Code$ ficimage -h
+usage: ficimage [-h] [-c CONFIG_FILE_PATH] [-d] path_to_epub
+
+Update a FicHub epub file with images.
+
+positional arguments:
+  path_to_epub          The path to the FicHub epub file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG_FILE_PATH, --config_file_path CONFIG_FILE_PATH
+                        The path to the ficimage.json file.
+  -d, --debug           Enable debug mode.
+
+```
 
 ### Image Support
 
@@ -105,8 +122,9 @@ If it does not find one, it uses the following defaults:
 
 
 ## TODO
+- [x] Improve logs
 - [ ] Conversion to other FicHub supported formats from ePub.
-- [ ] More testing ???
+- [ ] More testing 
 
 
 ## Contributing
