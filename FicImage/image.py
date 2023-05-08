@@ -11,36 +11,41 @@ def get_image_from_url(
 		url: str,
 		image_format: str,
 		compress_images: bool,
-		max_image_size: int
+		max_image_size: int,
+		debug: bool
 ) -> Tuple[bytes, str, str]:
 	"""
 	:param url: The url of the image.
 	:param image_format: The format to convert the image to.
 	:param compress_images: Whether to compress the image or not.
 	:param max_image_size: The maximum size of the image in bytes.
+	:param debug: Whether to print debug messages or not.
 	:return: A tuple of the image data, the image format and the image mime type.
 	"""
 	try:
 		if url.startswith("data:image") and 'base64' in url:
-			print("Base64 image detected")
+			if debug:
+				print("Base64 image detected")
 			head, base64data = url.split(',')
 			file_ext = str(head.split(';')[0].split('/')[1])
 			imgdata = b64decode(base64data)
 			
 			if file_ext.lower() in ("gif", "webp", "svg"):
-				print("GIF/WEBP/SVG image detected, skipping compression")
+				if debug:
+					print("GIF/WEBP/SVG image detected, skipping compression")
 				return imgdata, file_ext, f"image/{file_ext}"
 			
 			elif file_ext.lower() not in ["jpg", "jpeg", "png", "gif", "webp", "svg"]:
-				print(f"Image format {file_ext} not supported, converting to {image_format}")
+				if debug:
+					print(f"Image format {file_ext} not supported, converting to {image_format}")
 				return (
-					_convert_to_new_format(imgdata, image_format).read(),
+					_convert_to_new_format(imgdata, image_format, debug).read(),
 					image_format.lower(),
 					f"image/{image_format.lower()}"
 				)
 			
 			if compress_images:
-				compressed_base64_image = compress_image(BytesIO(imgdata), max_image_size, file_ext)
+				compressed_base64_image = compress_image(BytesIO(imgdata), max_image_size, file_ext, debug)
 				imgdata = PIL_Image_to_bytes(compressed_base64_image, file_ext)
 				
 			return imgdata, file_ext, f"image/{file_ext}"
@@ -66,7 +71,7 @@ def get_image_from_url(
 				return PIL_Image_to_bytes(PIL_image, "WEBP"), "webp", "image/webp"
 	
 			if compress_images:
-				PIL_image = compress_image(image, max_image_size, img_format)
+				PIL_image = compress_image(image, max_image_size, img_format, debug)
 	
 			return PIL_Image_to_bytes(PIL_image, image_format), image_format, f"image/{image_format.lower()}"
 
@@ -74,27 +79,32 @@ def get_image_from_url(
 		print("Encountered an error downloading image: " + str(e))
 
 
-def compress_image(image: BytesIO, target_size: int, image_format: str) -> PIL.Image.Image:
+def compress_image(image: BytesIO, target_size: int, image_format: str, debug: bool) -> PIL.Image.Image:
 	image_size = get_size_format(len(image.getvalue()))
-	print(f"Image size: {image_size}")
+	if debug:
+		print(f"Image size: {image_size}")
 
 	big_photo = Image.open(image).convert("RGBA")
 
 	target_pixel_count = 2.8114 * target_size
 	if len(image.getvalue()) > target_size:
-		print(f"Image is greater than {get_size_format(target_size)}, compressing")
+		if debug:
+			print(f"Image is greater than {get_size_format(target_size)}, compressing")
 		scale_factor = target_pixel_count / math.prod(big_photo.size)
 		if scale_factor < 1:
 			x, y = tuple(int(scale_factor * dim) for dim in big_photo.size)
-			print(f"Resizing image dimensions from {big_photo.size} to ({x}, {y})")
+			if debug:
+				print(f"Resizing image dimensions from {big_photo.size} to ({x}, {y})")
 			sml_photo = big_photo.resize((x, y), resample=Image.LANCZOS)
 		else:
 			sml_photo = big_photo
 		compressed_image_size = get_size_format(len(PIL_Image_to_bytes(sml_photo, image_format)))
-		print(f"Compressed image size: {compressed_image_size}")
+		if debug:
+			print(f"Compressed image size: {compressed_image_size}")
 		return sml_photo
 	else:
-		print(f"Image is less than {get_size_format(target_size)}, not compressing")
+		if debug:
+			print(f"Image is less than {get_size_format(target_size)}, not compressing")
 		return big_photo
 
 
@@ -145,7 +155,7 @@ def get_size_format(b, factor=1000, suffix="B"):
 	return f"{b:.2f}Y{suffix}"
 
 
-def _convert_to_new_format(image_bytestream, image_format: str):
+def _convert_to_new_format(image_bytestream, image_format: str, debug: bool):
 	new_image = BytesIO()
 	try:
 		Image.open(image_bytestream).save(new_image, format=image_format.upper())
@@ -153,5 +163,6 @@ def _convert_to_new_format(image_bytestream, image_format: str):
 		new_image.seek(0)
 		return new_image
 	except Exception as e:
-		print(f"Encountered an error converting image to {image_format}\nError: {e}")
+		if debug:
+			print(f"Encountered an error converting image to {image_format}\nError: {e}")
 		return image_bytestream

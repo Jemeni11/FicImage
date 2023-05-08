@@ -1,18 +1,26 @@
-import sys
+import argparse
 import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
-from image import get_image_from_url
-from utils import config_check, load_config_json, default_ficimage_settings
+from .image import get_image_from_url
+from .utils import config_check, load_config_json, default_ficimage_settings
 
 
-def main(path_to_epub: str, config_file_path: str = None) -> None:
+def main() -> None:
 	"""
 	This function updates the FicHub epub file with images.
-	:param path_to_epub: The path to the FicHub epub file.
-	:param config_file_path: The path to the ficimage.json file.
 	:return: None
 	"""
+	parser = argparse.ArgumentParser(description="Update a FicHub epub file with images.")
+	parser.add_argument("path_to_epub", help="The path to the FicHub epub file.")
+	parser.add_argument("-c", "--config_file_path", help="The path to the ficimage.json file.")
+	parser.add_argument("-d", "--debug", help="Enable debug mode.", action="store_true")
+	args = parser.parse_args()
+	
+	path_to_epub = args.path_to_epub
+	config_file_path = args.config_file_path
+	debug = args.debug
+	
 	try:
 		book = epub.read_epub(path_to_epub)
 		print(f'Opened {path_to_epub}')
@@ -49,7 +57,7 @@ def main(path_to_epub: str, config_file_path: str = None) -> None:
 							image_link = image.a['href']
 							print(f"[{item_file_name}] Image {images.index(image) + 1} "
 							      f"(out of {len(images)}). Source: {image_link}")
-	
+							
 							try:
 								(
 									image_content,
@@ -59,7 +67,8 @@ def main(path_to_epub: str, config_file_path: str = None) -> None:
 									url=image_link,
 									image_format=default_image_format_config,
 									compress_images=compress_images_config,
-									max_image_size=max_image_size_config
+									max_image_size=max_image_size_config,
+									debug=debug
 								)
 								image_path = f"images/" \
 								             f"{item_file_name}_image_{images.index(image)}.{image_extension.lower()}"
@@ -94,8 +103,4 @@ def main(path_to_epub: str, config_file_path: str = None) -> None:
 
 
 if __name__ == '__main__':
-	try:
-		ficimage_json_path = sys.argv[2]
-	except IndexError:
-		ficimage_json_path = None
-	main(sys.argv[1], ficimage_json_path)
+	main()
