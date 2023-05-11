@@ -1,6 +1,6 @@
 [project]
 name = "FicImageScript"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name="Emmanuel C. Jemeni", email="jemenichinonso11@gmail.com" }
 ]
