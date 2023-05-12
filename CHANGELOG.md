@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+[//]: # (Types of changes)
+
+[//]: # (- **Added** for new features.)
+
+[//]: # (- **Changed** for changes in existing functionality.)
+
+[//]: # (- **Deprecated** for soon-to-be removed features.)
+
+[//]: # (- **Removed** for now removed features.)
+
+[//]: # (- **Fixed** for any bug fixes.)
+
+[//]: # (- **Security** in case of vulnerabilities.)
+
+## [1.0.2] - 2023-05-12
+
+### Added
+
+- Added the project version to `__init__.py`.
+- Created a README file for PyPI (PYPI_README.rst). 
+This file replaces the old README file as the long description for the package.
+The old README still exists as `README.md` and is still used for GitHub.
+
+### Changed
+- Updated the file paths in `setup.py` and `pyproject.toml` to point to 
+the new `PYPI_README.rst` file. 
+- Commented out the `[project]` and `[project-urls]` sections in `pyproject.toml` 
+as they were redundant. 
+
+### Fixed
+- Fixed the long description content type in `setup.py` and `pyproject.toml` to 
+match the new README format. The content type was updated from `text/markdown` to `text/x-rst`.
+
 ## [1.0.1] - 2023-05-11
 
 ### Added
@@ -15,5 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Released FicImageScript
 
 
+[1.0.2]: https://github.com/Jemeni11/FicImage/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Jemeni11/FicImage/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Jemeni11/FicImage/releases/tag/v1.0.0
