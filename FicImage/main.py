@@ -44,7 +44,8 @@ def main() -> None:
 				soup = BeautifulSoup(item.content, "lxml-xml")
 				p_tags = soup.find_all('p')
 				images = [i for i in p_tags if '[img:' in i.text]
-				print(f'Found {len(images)} images in {item.file_name}')
+				if debug:
+					print(f'Found {len(images)} images in {item.file_name}')
 				item_file_name = item.file_name.split('.')[0]
 				images_downloaded[item.file_name] = [0, len(images)]
 				# Clean up the images link
@@ -102,8 +103,8 @@ def main() -> None:
 				total_number_of_images_downloaded += chapter_image_list[0]
 				number_of_all_images_found += chapter_image_list[1]
 
-			print(f'Wrote [FicImage]{file_name}.epub')
-			print(f"Image overview of {file_name}")
+			print(f'\nWrote [FicImage]{file_name}.epub')
+			print(f"\nImage overview of {file_name}")
 			print("=" * 54)
 			for k, v in images_downloaded.items():
 				print(f"{k}{' ' * (18 - len(k))}\t{v[0]} out of {v[1]} images downloaded")

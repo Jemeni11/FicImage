@@ -59,8 +59,8 @@ def default_ficimage_settings() -> dict:
 		"max_image_size": 100000
 	}
 	default_settings_str = '\n'.join([f"{key}: {value}" for key, value in default_settings.items()])
-	print(f"Using default config settings:"
-	      f"\n\n============================\n"
+	print(f"\nDefault config settings:"
+	      f"\n============================\n"
 	      f"{default_settings_str}"
 	      f"\n============================\n")
 	return default_settings
