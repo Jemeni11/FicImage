@@ -22,7 +22,7 @@ def main() -> None:
 	debug = args.debug
 
 	try:
-		book = epub.read_epub(path_to_epub)
+		book = epub.read_epub(path_to_epub, {'ignore_ncx': False})
 		print(f'Opened {path_to_epub}')
 
 		(config_file_exists, config_file_location) = config_check(config_file_path)
