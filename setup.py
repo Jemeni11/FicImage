@@ -10,7 +10,7 @@ setuptools.setup(
 	author_email="jemenichinonso11@gmail.com",
 	description="FicImage is an application designed to enhance the reading experience of FicHub epubs.",
 	long_description=long_description,
-	long_description_content_type="text/markdown",
+	long_description_content_type="text/x-rst",
 	url="https://github.com/Jemeni11/FicImage",
 	project_urls={
 		"Bug Tracker": "https://github.com/Jemeni11/FicImage/issues",
