@@ -42,7 +42,7 @@ def load_config_json(ficimage_path: str) -> dict:
 	:return: A dict containing the data stored inside ficimage.json
 	"""
 	try:
-		with open(os.path.join(ficimage_path, "../ficimage.json"), 'r') as f:
+		with open(os.path.join(ficimage_path, "ficimage.json"), 'r') as f:
 			return json.load(f)
 	except json.decoder.JSONDecodeError:
 		sys.exit("[Loading Config JSON]: Invalid JSON in Config File")
