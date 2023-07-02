@@ -44,6 +44,8 @@ def load_config_json(ficimage_path: str) -> dict:
 	try:
 		with open(os.path.join(ficimage_path, "ficimage.json"), 'r') as f:
 			return json.load(f)
+	except FileNotFoundError:
+		sys.exit(f"[Loading Config JSON]: File not found. Are you sure there's a ficimage.json file in {ficimage_path}")
 	except json.decoder.JSONDecodeError:
 		sys.exit("[Loading Config JSON]: Invalid JSON in Config File")
 
