@@ -13,6 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [//]: # (- **Fixed** for any bug fixes.)
 [//]: # (- **Security** in case of vulnerabilities.)
 
+
+## [2.1.0] - 2023-07-22
+
+### Fixed
+- [Issue #4](https://github.com/Jemeni11/FicImage/issues/4). Replaced manual string splitting/joining code 
+with os.path functions.
+- Syntax error in PYPI_README.rst. 
+
+### Changed
+- Uncommented out the `[project]` and `[project-urls]` sections in `pyproject.toml` 
+as they are not redundant anymore. 
+
+
 ## [2.0.0] - 2023-07-22
 
 ### Fixed
@@ -59,6 +72,7 @@ match the new README format. The content type was updated from `text/markdown` t
 - Released FicImageScript
 
 
+[2.1.0]: https://github.com/Jemeni11/FicImage/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Jemeni11/FicImage/compare/v1.0.2...v2.0.0
 [1.0.2]: https://github.com/Jemeni11/FicImage/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Jemeni11/FicImage/compare/v1.0.0...v1.0.1
