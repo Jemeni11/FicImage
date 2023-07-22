@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from .image import get_image_from_url
 from .utils import config_check, load_config_json, default_ficimage_settings
 
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 
 
 def update_epub(path_to_epub, config_file_path, debug):
@@ -123,7 +123,11 @@ def update_epub(path_to_epub, config_file_path, debug):
 				number_of_all_images_found += chapter_image_list[1]
 
 			if number_of_all_images_found != 0:
-				epub.write_epub(f"[FicImage]{file_name}.epub", book)
+				try:
+					epub_location = "/".join(path_to_epub.split("/")[:-1])
+					epub.write_epub(f"{epub_location}/[FicImage]{file_name}.epub", book)
+				except:
+					epub.write_epub(f"[FicImage]{file_name}.epub", book)
 				print(f'\nWrote [FicImage]{file_name}.epub')
 				print(f"\nImage overview of {file_name}")
 				print("=" * 54)
@@ -172,14 +176,14 @@ def main() -> None:
 	parser.add_argument(
 		"-v",
 		"--version",
-		help="Prints out the current version and quits",
+		help="Prints out the current version and quits.",
 		action='version',
 		version=f"FicImage Version {__version__}"
 	)
 	parser.add_argument(
 		"-r",
 		"--recursive",
-		help="This will update all files in the directory path given and its subdirectories",
+		help="This will update all files in the directory path given and its subdirectories.",
 	)
 	args = parser.parse_args()
 
@@ -189,8 +193,8 @@ def main() -> None:
 	recursive = args.recursive
 
 	if path_to_epub is None and recursive is None:
-		sys.exit("Either pass in a path to an epub or use the --recursive \
-		flag to convert the current directory and its sub-directories")
+		sys.exit("Either pass in a path to an epub or use the --recursive flag to convert the current directory and "
+		         "its sub-directories")
 	elif path_to_epub:
 		if recursive:
 			print("Ignoring --recursive flag since path_to_epub was given")
