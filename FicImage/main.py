@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from .image import get_image_from_url
 from .utils import config_check, load_config_json, default_ficimage_settings
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 
 def update_epub(path_to_epub, config_file_path, debug):
@@ -124,9 +124,14 @@ def update_epub(path_to_epub, config_file_path, debug):
 
 			if number_of_all_images_found != 0:
 				try:
-					epub_location = "/".join(path_to_epub.split("/")[:-1])
-					epub.write_epub(f"{epub_location}/[FicImage]{file_name}.epub", book)
-				except:
+					epub_dir = os.path.dirname(path_to_epub)
+					new_filename = os.path.join(epub_dir, f"[FicImage]{file_name}.epub")
+					if debug:
+						print(f"Saving in directory: {epub_dir} ")
+					epub.write_epub(new_filename, book)
+				except Exception as e:
+					if debug:
+						print(f"Error: {e}\n Trying to save in the current working directory instead")
 					epub.write_epub(f"[FicImage]{file_name}.epub", book)
 				print(f'\nWrote [FicImage]{file_name}.epub')
 				print(f"\nImage overview of {file_name}")
