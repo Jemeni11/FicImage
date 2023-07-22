@@ -38,6 +38,8 @@ Installation with PIP
       -v, --version         Prints out the current version and quits
       -r RECURSIVE, --recursive RECURSIVE
                             This will update all files in the directory path given and its subdirectories
+..
+
 Image Support
 ~~~~~~~~~~~~~
 
