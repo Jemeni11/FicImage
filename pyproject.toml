@@ -1,25 +1,25 @@
-#[project]
-#name = "FicImageScript"
-#version = "1.0.1"
-#authors = [
-#  { name="Emmanuel C. Jemeni", email="jemenichinonso11@gmail.com" }
-#]
-#description = "FicImage is an application designed to enhance the reading experience of FicHub epubs."
-#readme = "PYPI_README.rst"
-#requires-python = ">=3.6"
-#license = {file = "LICENSE"}
-#keywords = ["fanfiction", "fichub", "ficimage", "image"]
-#classifiers = [
-#    "Development Status :: 5 - Production/Stable",
-#    "Programming Language :: Python :: 3",
-#    "License :: OSI Approved :: MIT License",
-#    "Operating System :: OS Independent",
-#    "Topic :: Internet :: WWW/HTTP",
-#]
-#
-#[project.urls]
-#"Homepage" = "https://github.com/Jemeni11/FicImage"
-#"Bug Tracker" = "https://github.com/Jemeni11/FicImage/issues"
+[project]
+name = "FicImageScript"
+version = "2.1.0"
+authors = [
+  { name="Emmanuel C. Jemeni", email="jemenichinonso11@gmail.com" }
+]
+description = "FicImage is an application designed to enhance the reading experience of FicHub epubs."
+readme = "PYPI_README.rst"
+requires-python = ">=3.6"
+license = {file = "LICENSE"}
+keywords = ["fanfiction", "fichub", "ficimage", "image"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Jemeni11/FicImage"
+"Bug Tracker" = "https://github.com/Jemeni11/FicImage/issues"
 
 [build-system]
 # These are the assumed default build requirements from pip:
