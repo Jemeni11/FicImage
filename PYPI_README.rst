@@ -15,7 +15,7 @@ Installation with PIP
 
 1. Install FicImage using ``pip install FicImageScript``.
 2. After installation, run the program using
-   ``ficimage path/to/epub -c path/to/ficimage/json`` where
+   ``ficimage -p path/to/epub -c path/to/ficimage/json`` where
    ``path/to/epub`` is the path to the **FicHub epub** you want to add
    images to and ``path/to/ficimage/json`` is the path to a file called
    **ficimage.json** . ficimage.json lets you configure FicImage. See
@@ -24,19 +24,20 @@ Installation with PIP
 .. code:: shell
 
    (virt) nonso@HPEnvy:~/Documents/Code$ ficimage -h
-   usage: ficimage [-h] [-c CONFIG_FILE_PATH] [-d] path_to_epub
+    usage: main.py [-h] [-p PATH_TO_EPUB] [-c CONFIG_FILE_PATH] [-d] [-v] [-r RECURSIVE]
 
-   Update a FicHub epub file with images.
+    Update a FicHub epub file with images.
 
-   positional arguments:
-     path_to_epub          The path to the FicHub epub file.
-
-   optional arguments:
-     -h, --help            show this help message and exit
-     -c CONFIG_FILE_PATH, --config_file_path CONFIG_FILE_PATH
-                           The path to the ficimage.json file.
-     -d, --debug           Enable debug mode.
-
+    options:
+      -h, --help            show this help message and exit
+      -p PATH_TO_EPUB, --path_to_epub PATH_TO_EPUB
+                            The path to the FicHub epub file.
+      -c CONFIG_FILE_PATH, --config_file_path CONFIG_FILE_PATH
+                            The path to the ficimage.json file.
+      -d, --debug           Enable debug mode.
+      -v, --version         Prints out the current version and quits
+      -r RECURSIVE, --recursive RECURSIVE
+                            This will update all files in the directory path given and its subdirectories
 Image Support
 ~~~~~~~~~~~~~
 
