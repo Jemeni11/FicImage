@@ -5,7 +5,7 @@ with open("PYPI_README.rst", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
 	name="FicImageScript",
-	version="2.1.0",
+	version="3.0.0",
 	author="Emmanuel C. Jemeni",
 	author_email="jemenichinonso11@gmail.com",
 	description="FicImage is an application designed to enhance the reading experience of FicHub epubs.",
@@ -21,17 +21,17 @@ setuptools.setup(
 		]
 	},
 	install_requires=[
-		'beautifulsoup4==4.12.2',
-		'certifi==2022.12.7',
-		'charset-normalizer==3.1.0',
-		'EbookLib==0.18',
-		'idna==3.4',
-		'lxml==4.9.2',
-		'Pillow==9.5.0',
-		'requests==2.29.0',
-		'six==1.16.0',
-		'soupsieve==2.4.1',
-		'urllib3==1.26.15'
+		'beautifulsoup4>=4.12.2',
+		'certifi>=2022.12.7',
+		'charset-normalizer>=3.1.0',
+		'EbookLib>=0.18',
+		'idna>=3.4',
+		'lxml>=4.9.2',
+		'Pillow>=9.5.0',
+		'requests>=2.31.0',
+		'six>=1.16.0',
+		'soupsieve>=2.4.1',
+		'urllib3>=1.26.15'
 	],
 	keywords="fanfiction fichub ficimage image download epub",
 	classifiers=[

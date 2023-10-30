@@ -14,11 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [//]: # (- **Security** in case of vulnerabilities.)
 
 
+## [3.0.0] - 2023-10-30
+
+### Security
+- Updated the `requests` dependency to ensure compatibility with version 2.31.0 or higher to 
+mitigate [CVE-2023-32681](https://nvd.nist.gov/vuln/detail/CVE-2023-32681) security issue.
+
+### Changed
+- Modified requirements to use "compatible with" (>=) instead of "exact version" (==) when installing to prevent 
+potential conflicts with previously installed software.
+
+
 ## [2.1.0] - 2023-07-22
 
 ### Fixed
 - [Issue #4](https://github.com/Jemeni11/FicImage/issues/4). Replaced manual string splitting/joining code 
-with os.path functions.
+with `os.path` functions.
 - Syntax error in PYPI_README.rst. 
 
 ### Changed
@@ -72,6 +83,7 @@ match the new README format. The content type was updated from `text/markdown` t
 - Released FicImageScript
 
 
+[3.0.0]: https://github.com/Jemeni11/FicImage/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/Jemeni11/FicImage/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Jemeni11/FicImage/compare/v1.0.2...v2.0.0
 [1.0.2]: https://github.com/Jemeni11/FicImage/compare/v1.0.1...v1.0.2
