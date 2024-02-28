@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [//]: # (- **Fixed** for any bug fixes.)
 [//]: # (- **Security** in case of vulnerabilities.)
 
+## [4.0.0] - 2024-02-28
+
+### Fixed
+- Fixed major file path issue preventing Windows users from using FicImage.
 
 ## [3.0.0] - 2023-10-30
 
@@ -83,6 +87,7 @@ match the new README format. The content type was updated from `text/markdown` t
 - Released FicImageScript
 
 
+[4.0.0]: https://github.com/Jemeni11/FicImage/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/Jemeni11/FicImage/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/Jemeni11/FicImage/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Jemeni11/FicImage/compare/v1.0.2...v2.0.0
