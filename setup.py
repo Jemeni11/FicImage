@@ -5,7 +5,7 @@ with open("PYPI_README.rst", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
 	name="FicImageScript",
-	version="3.0.0",
+	version="4.0.0",
 	author="Emmanuel C. Jemeni",
 	author_email="jemenichinonso11@gmail.com",
 	description="FicImage is an application designed to enhance the reading experience of FicHub epubs.",
