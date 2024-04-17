@@ -49,9 +49,15 @@ def get_image_from_url(
 				imgdata = PIL_Image_to_bytes(compressed_base64_image, file_ext)
 				
 			return imgdata, file_ext, f"image/{file_ext}"
-		
+		elif url.startswith("https://imgur.com/"):
+			url = "https://i.imgur.com/" + url.split("https://imgur.com/")[-1]
+
 		with requests.Session() as session:
-			img = session.get(url, stream=True)
+			headers = {
+				'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+				              "Chrome/122.0.0.0 Safari/537.36"
+			}
+			img = session.get(url, stream=True, headers=headers)
 		
 			if img.headers.get("content-type", "") == "image/svg+xml":
 				return img.content, "svg", "image/svg+xml"
