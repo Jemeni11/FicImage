@@ -1,4 +1,6 @@
 # FicImage/FicImageScript
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJemeni11%2FFicImage.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FJemeni11%2FFicImage?ref=badge_shield)
+
 
 ## Introduction
 FicImage is an application designed to enhance the reading experience of FicHub epubs. With FicImage, users can easily add missing images to their FicHub epubs, bringing the stories to life with vibrant visuals. This user-friendly tool allows readers to fully immerse themselves in their favorite fan fiction stories and enjoy them in a whole new way.
@@ -145,3 +147,7 @@ Fork the repo and get started!
   [Website](https://fichub.net/) • [GitHub](https://github.com/FicHub/fichub.net) • [Discord](https://discord.gg/sByBAhX)
 
   Thanks to [iris](https://github.com/iridescent-beacon) for helping me with this project as well.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJemeni11%2FFicImage.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FJemeni11%2FFicImage?ref=badge_large)
