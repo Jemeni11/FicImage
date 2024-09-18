@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from .image import get_image_from_url
 from .utils import config_check, load_config_json, default_ficimage_settings
 
-__version__ = "4.1.0"
+__version__ = "4.1.1"
 
 
 def update_epub(path_to_epub, config_file_path, debug):
