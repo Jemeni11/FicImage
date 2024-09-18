@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [//]: # (- **Fixed** for any bug fixes.)
 [//]: # (- **Security** in case of vulnerabilities.)
 
+## [4.1.1] - 2024-09-18
+
+### Changed
+- Changed the build system.
+
 ## [4.1.0] - 2024-04-17
 
 ### Added
@@ -92,6 +97,7 @@ match the new README format. The content type was updated from `text/markdown` t
 - Released FicImageScript
 
 
+[4.1.1]: https://github.com/Jemeni11/FicImage/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/Jemeni11/FicImage/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/Jemeni11/FicImage/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/Jemeni11/FicImage/compare/v2.1.0...v3.0.0
