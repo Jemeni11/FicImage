@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.scripts]  # Optional
-ficimage = "FicImageScript:main"
+ficimage = "FicImageScript.main:main"
 
 [project.urls]
 "Homepage" = "https://github.com/Jemeni11/FicImage"
