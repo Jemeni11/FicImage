@@ -186,39 +186,83 @@ def get_image_from_url(
 
 
 # --- Image Compression Functions ---
-
-def compress_image(image: BytesIO, target_size: int) -> Image.Image:
+def calculate_target_pixel_count(max_size: int, bytes_per_pixel: int) -> float:
     """
-    Compresses an image to fit within the specified size.
+    Estimate the target pixel count to fit within the maximum size.
+
+    :param max_size: Maximum file size in bytes.
+    :param bytes_per_pixel: Bytes used per pixel in the image format.
+    :return: Target pixel count.
+    """
+    return max_size / bytes_per_pixel
+
+
+def compress_image(image: BytesIO, max_size: int) -> Image.Image:
+    """
+    Compresses an image to fit within the specified size while maintaining its aspect ratio.
+
     :param image: The input image as a byte stream.
-    :param target_size: The maximum allowed image size in bytes.
+    :param max_size: The maximum allowed image size in bytes.
     :return: The compressed image as a PIL.Image.Image object.
     """
-    image_size = get_size_format(len(image.getvalue()))
-    print_verbose(f"Image size: {image_size}")
 
-    big_photo = Image.open(image).convert("RGBA")
+    # Load the image and determine bytes per pixel from its mode
+    original_image = Image.open(image)
+    mode_to_bpp = {
+        "1": 1 / 8,  # 1 bit per pixel (monochrome)
+        "L": 1,  # 1 byte per pixel (grayscale)
+        "P": 1,  # 1 byte per pixel (palette-based)
+        "RGB": 3,  # 3 bytes per pixel (True color)
+        "RGBA": 4,  # 4 bytes per pixel (True color with alpha)
+        "CMYK": 4,  # 4 bytes per pixel (CMYK color space)
+        "YCbCr": 3,  # 3 bytes per pixel (JPEG color space)
+    }
+    bytes_per_pixel = mode_to_bpp.get(original_image.mode, 4)  # Default to RGBA
 
-    target_pixel_count = 2.8114 * target_size
-    if len(image.getvalue()) > target_size:
+    original_size = len(image.getvalue())
+    print_verbose(f"Original image size: {get_size_format(original_size)}")
+    print_verbose(f"Image mode: {original_image.mode}, bytes per pixel: {bytes_per_pixel}")
+
+    if original_size <= max_size:
         print_verbose(
-            f"Image is greater than {get_size_format(target_size)}, compressing"
+            f"Image is within the allowed size of {get_size_format(max_size)}, no compression needed."
         )
-        scale_factor = target_pixel_count / math.prod(big_photo.size)
-        if scale_factor < 1:
-            x, y = tuple(int(scale_factor * dim) for dim in big_photo.size)
-            print_verbose(
-                f"Resizing image dimensions from {big_photo.size} to ({x}, {y})"
-            )
-            sml_photo = big_photo.resize((x, y), resample=Image.LANCZOS)
-        else:
-            sml_photo = big_photo
-        return sml_photo
-    else:
+        return original_image
+
+    print_verbose(
+        f"Image exceeds {get_size_format(max_size)}, starting compression..."
+    )
+
+    # Calculate the target pixel count and the scale factor
+    target_pixel_count = calculate_target_pixel_count(max_size, bytes_per_pixel)
+    original_pixel_count = original_image.size[0] * original_image.size[1]
+    scale_factor = math.sqrt(target_pixel_count / original_pixel_count)
+
+    if scale_factor >= 1:
+        print_verbose("Image already fits within the size; no resizing needed.")
+        return original_image
+
+    # Resize the image
+    new_width = int(original_image.size[0] * scale_factor)
+    new_height = int(original_image.size[1] * scale_factor)
+    print_verbose(
+        f"Resizing image from {original_image.size} to ({new_width}, {new_height})..."
+    )
+
+    compressed_image = original_image.resize((new_width, new_height), resample=Image.LANCZOS)
+
+    # Optional: Double-check the compressed size
+    with BytesIO() as temp_output:
+        compressed_image.save(temp_output, format="PNG")  # Adjust format as needed
+        compressed_size = len(temp_output.getvalue())
         print_verbose(
-            f"Image is less than {get_size_format(target_size)}, not compressing"
+            f"Compressed image size: {get_size_format(compressed_size)}"
         )
-        return big_photo
+
+        if compressed_size > max_size:
+            print_verbose("Warning: Compressed image still exceeds max size.")
+
+    return compressed_image
 
 
 def PIL_Image_to_bytes(pil_image: Image.Image, image_format: str) -> bytes:
