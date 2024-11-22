@@ -3,6 +3,8 @@ import sys
 from typing import Tuple
 import json
 from urllib import request, error
+from packaging.version import parse
+from .global_state import state
 
 
 def config_check(directory_path: str = None) -> Tuple[bool, str]:
@@ -32,8 +34,10 @@ def config_check(directory_path: str = None) -> Tuple[bool, str]:
     file_path = os.path.join(directory_path, "ficimage.json")
 
     is_file = os.path.isfile(file_path)
-    print(f"[Config File Check]: "
-          f"{'ficimage.json found!' if is_file else 'ficimage.json not found, using default config settings'}")
+    print(
+        f"[Config File Check]: "
+        f"{'ficimage.json found!' if is_file else 'ficimage.json not found, using default config settings'}"
+    )
 
     return is_file, directory_path
 
@@ -45,7 +49,7 @@ def load_config_json(ficimage_path: str) -> dict:
     :return: A dict containing the data stored inside ficimage.json
     """
     try:
-        with open(os.path.join(ficimage_path, "ficimage.json"), 'r') as f:
+        with open(os.path.join(ficimage_path, "ficimage.json"), "r") as f:
             return json.load(f)
     except FileNotFoundError:
         sys.exit(f"[Loading Config JSON]: File not found. Are you sure there's a ficimage.json file in {
@@ -62,14 +66,17 @@ def default_ficimage_settings() -> dict:
     default_settings = {
         "compress_images": True,
         "default_image_format": "JPEG",
-        "max_image_size": 100000
+        "max_image_size": 100000,
     }
-    default_settings_str = '\n'.join(
-        [f"{key}: {value}" for key, value in default_settings.items()])
-    print(f"\nDefault config settings:"
-          f"\n============================\n"
-          f"{default_settings_str}"
-          f"\n============================\n")
+    default_settings_str = "\n".join(
+        [f"{key}: {value}" for key, value in default_settings.items()]
+    )
+    print(
+        f"\nDefault config settings:"
+        f"\n============================\n"
+        f"{default_settings_str}"
+        f"\n============================\n"
+    )
     return default_settings
 
 
@@ -112,7 +119,7 @@ def file_search(current_directory: str) -> list:
     :return: A list of file paths matching the specified extensions.
     """
     # Supported file extensions
-    supported_extensions = ('.epub', '.zip', '.pdf', '.mobi')
+    supported_extensions = (".epub", ".zip", ".pdf", ".mobi")
     files_path_list = []
 
     # Walk through the directory tree
@@ -129,11 +136,6 @@ def file_search(current_directory: str) -> list:
     return files_path_list
 
 
-def parse_version(version: str):
-    """Converts a version string (e.g., '1.2.3') into a tuple of integers (1, 2, 3)."""
-    return tuple([int(part) for part in version.split(".")])
-
-
 def check_for_update(current_version: str):
     """Checks if a new version of FicImage is available on PyPI."""
     try:
@@ -142,12 +144,17 @@ def check_for_update(current_version: str):
             data = json.load(response)
             latest_version = data["info"]["version"]
 
-        if parse_version(latest_version) > parse_version(current_version):
+        if parse(latest_version) > parse(current_version):
             print(f"Update available: v{latest_version}. You're on v{current_version}.")
-            print(f"Run `pip install --upgrade FicImageScript` to update.")
+            print("Run `pip install --upgrade FicImageScript` to update.")
         else:
             print(f"You're on the latest version: v{current_version}.")
 
     except error.URLError as e:
         print(f"Unable to check for updates: {e}")
 
+
+def print_verbose(message: str):
+    """Prints messages only if verbose mode is enabled."""
+    if state["verbose"]:
+        print(f"[VERBOSE] {message}")
