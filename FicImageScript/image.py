@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from io import BytesIO
 from base64 import b64decode
 import math
@@ -130,7 +130,12 @@ def handle_image_data(
     image = BytesIO(content)
     image.seek(0)
 
-    PIL_image = Image.open(image)
+    try:
+        PIL_image = Image.open(image)
+    except UnidentifiedImageError:
+        print("Unable to identify image format")
+        print_verbose("Invalid or corrupted image data")
+
     img_format = str(PIL_image.format)
 
     if img_format.lower() in ("gif", "webp"):
@@ -179,6 +184,10 @@ def get_image_from_url(
                 return response.content, "svg", "image/svg+xml"
 
             return handle_image_data(response.content, image_format, compress_images, max_image_size)
+
+    except requests.RequestException as e:
+        print(f"Network error downloading image from url: {url}")
+        print_verbose(f"Error: {e}")
 
     except Exception as e:
         print(f"Encountered an error downloading image from url: {url}")
