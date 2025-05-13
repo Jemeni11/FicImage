@@ -236,7 +236,8 @@ If no configuration file is found, FicImage will use the following default setti
 
 ## Why did I build this?
 
-> [!INFO]
+> [!NOTE]
+>
 > FicHub is a growing set of accessibility tools for reading fanfiction.
 
 [FicHub](https://fichub.net/) is great - it really is. But after one too many times of copying image links to open in my browser, I had to find an alternative. Building this tool wasn't my first thought. I initially found [leech.py](https://github.com/kemayo/leech), but its image support was still a work in progress. After discovering a [PR](https://github.com/kemayo/leech/pull/84) that added basic image support, I expanded on that code, which eventually became the core of what we now call FicImage.
