@@ -10,7 +10,7 @@
   <h1 align="center">FicImage</h1>
 
   <p align="center">
-    Description
+    Enhance your FicHub files with images.
     <br />
     <a href="https://github.com/Jemeni11/FicImage"><strong>Explore the repo »</strong></a>
   </p>
