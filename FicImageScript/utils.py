@@ -1,25 +1,27 @@
 import os
 import sys
-from typing import Tuple
 import json
 from urllib import request, error
 from packaging.version import parse
 from .global_state import state
 
 
-def config_check(directory_path: str = None) -> Tuple[bool, str]:
+def config_check(directory_path: str = None) -> tuple[bool, str]:
     """
     This function checks if ficimage.json exists in the given directory path
     and returns a tuple containing a boolean and a string (the directory path).
     If no directory path is given, FicImage checks the current directory and
     then the Operating System's home directory.
+
     :param directory_path: A string or None
     :return: A tuple containing a boolean and a string
     """
     if directory_path is None:
         current_dir = os.getcwd()
-        print(f"[Config File Check]: No directory was passed, checking current directory '{
-        current_dir}'")
+        print(
+            f"[Config File Check]: No directory was passed, "
+            f"checking current directory '{current_dir}'"
+        )
 
         file_path = os.path.join(current_dir, "ficimage.json")
 
@@ -28,8 +30,10 @@ def config_check(directory_path: str = None) -> Tuple[bool, str]:
             return True, current_dir
 
         directory_path = os.path.expanduser("~")
-        print(f"[Config File Check]: ficimage.json not found in current directory, checking '{
-        directory_path}'")
+        print(
+            f"[Config File Check]: ficimage.json not found "
+            f"in current directory, checking '{directory_path}'"
+        )
 
     file_path = os.path.join(directory_path, "ficimage.json")
 
@@ -52,8 +56,10 @@ def load_config_json(ficimage_path: str) -> dict:
         with open(os.path.join(ficimage_path, "ficimage.json"), "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        sys.exit(f"[Loading Config JSON]: File not found. Are you sure there's a ficimage.json file in {
-        ficimage_path}")
+        sys.exit(
+            f"[Loading Config JSON]: File not found. "
+            f"Are you sure there's a ficimage.json file in {ficimage_path}"
+        )
     except json.decoder.JSONDecodeError:
         sys.exit("[Loading Config JSON]: Invalid JSON in Config File")
 
@@ -65,8 +71,9 @@ def default_ficimage_settings() -> dict:
     """
     default_settings = {
         "compress_images": True,
-        "default_image_format": "JPEG",
+        "default_image_format": "WEBP",
         "max_image_size": 100000,
+        "zip_embed_images": False,
     }
     default_settings_str = "\n".join(
         [f"{key}: {value}" for key, value in default_settings.items()]
@@ -156,5 +163,31 @@ def check_for_update(current_version: str):
 
 def print_verbose(message: str):
     """Prints messages only if verbose mode is enabled."""
-    if state["verbose"]:
+    if state.get("verbose", False):
         print(f"[VERBOSE] {message}")
+
+
+def print_image_summary(base_name: str, images_downloaded: dict[str, list[int]]) -> None:
+    """
+    Print a summary table of images downloaded per file.
+
+    :param base_name: The base file name (for the header).
+    :param images_downloaded: Dict of {filename: [downloaded_count, total_count]}.
+    :return: None
+    """
+
+    total_downloaded = sum(v[0] for v in images_downloaded.values())
+    total_found = sum(v[1] for v in images_downloaded.values())
+
+    if total_found == 0:
+        print("No images found.")
+        return
+
+    print(f"\nImage overview of {base_name}")
+    print("=" * 54)
+    for filename, (downloaded, total) in images_downloaded.items():
+        padding = " " * max(0, 18 - len(filename))
+        print(f"{filename}{padding}\t{downloaded} out of {total} images downloaded")
+    print("=" * 54)
+    print(f"Total: {total_downloaded} out of {total_found}")
+    print("=" * 54)
