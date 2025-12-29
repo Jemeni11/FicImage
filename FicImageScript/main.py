@@ -7,6 +7,7 @@ from .utils import (
     file_search,
     check_for_update,
     identify_file_type,
+    show_credits
 )
 from .epub import update_epub
 from .zip import update_zip
@@ -14,13 +15,18 @@ from .pdf import update_pdf
 from .mobi import update_mobi
 
 
-def initialize_state(config_file_path: str) -> None:
+def initialize_state(config_file_path: str = None) -> None:
     """
     Update the global state with config values from a file if it exists.
 
-    :param config_file_path: Path to the config file.
+    :param config_file_path: Optional path to the config file. If None, checks default locations.
     """
-    (config_file_exists, config_file_location) = config_check(config_file_path)
+    if config_file_path:
+        (config_file_exists, config_file_location) = config_check(config_file_path)
+    else:
+        # Check default locations (current dir, then home dir)
+        (config_file_exists, config_file_location) = config_check(None)
+
     if config_file_exists:
         ficimage_config = load_config_json(config_file_location)
 
@@ -31,17 +37,28 @@ def initialize_state(config_file_path: str) -> None:
         state["default_image_format"] = ficimage_config.get(
             "default_image_format", state["default_image_format"]
         )
-
-        # Validate the image format
-        if state["default_image_format"].lower() not in ("jpg", "jpeg", "png"):
-            state["default_image_format"] = "JPEG"
-
         state["max_image_size"] = ficimage_config.get(
             "max_image_size", state["max_image_size"]
         )
+        state["zip_embed_images"] = ficimage_config.get(
+            "zip_embed_images", state["zip_embed_images"]
+        )
+
+    state["default_image_format"] = state["default_image_format"].upper()
+    if state["default_image_format"] not in ("JPG", "JPEG", "PNG", "WEBP"):
+        print(
+            f"[Config Warning]: Invalid image format '{state['default_image_format']}'. "
+            f"Defaulting to WEBP."
+        )
+        state["default_image_format"] = "WEBP"
 
 
 def update_file(file_path: str):
+    """
+    Identify and process a FicHub file based on its type.
+
+    :param file_path: Path to the file to process.
+    """
     file_type = identify_file_type(file_path)
     update_function = None
 
@@ -61,13 +78,10 @@ def update_file(file_path: str):
 
 
 def main() -> None:
-    """
-    This function updates the FicHub file with images.
+    """This function updates the FicHub file with images."""
 
-    :return: None
-    """
-
-    parser = argparse.ArgumentParser(description="Update a FicHub file with images.")
+    parser = argparse.ArgumentParser(description="Update a FicHub file with images.",
+                                     epilog="Made with ❤️ by @Jemeni11 | Run --credits to learn more & show support")
     parser.add_argument("-p", "--path", help="The path to the FicHub file.")
     parser.add_argument(
         "-c", "--config_file_path", help="The path to the ficimage.json file."
@@ -93,12 +107,21 @@ def main() -> None:
         help="Check if a new version is available.",
         action="store_true",
     )
+    parser.add_argument(
+        "--credits",
+        help="Show credits and support information",
+        action="store_true"
+    )
     args = parser.parse_args()
 
     file_path = args.path
     config_file_path = args.config_file_path
     verbose = args.verbose
     recursive = args.recursive
+
+    if args.credits:
+        show_credits()
+        sys.exit()
 
     if args.config_file_path:
         initialize_state(config_file_path)
@@ -126,7 +149,7 @@ def main() -> None:
                 update_file(i)
             except Exception as e:
                 print(f"Error! Skipping {i}")
-                if verbose:
+                if state.get("verbose", False):
                     print(f"Exception: {e}")
 
 
