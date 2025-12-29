@@ -1,68 +1,13 @@
 from .global_state import state
 import os
-import hashlib
 import base64
 import zipfile
-import shutil
 import tempfile
-from typing import List
 from bs4 import BeautifulSoup
 from .image import get_image_from_url
 
-
-def copy_zip(input_zip_path: str, backup_zip_path: str) -> None:
-    """
-    Create a backup copy of the input ZIP file.
-
-    Args:
-        input_zip_path (str): Path to the original ZIP file.
-        backup_zip_path (str): Path where the backup ZIP file will be saved.
-    """
-    shutil.copy(input_zip_path, backup_zip_path)
-
-
-def extract_zip_metadata(input_zip_path: str) -> List[zipfile.ZipInfo]:
-    """
-    Extract full metadata (ZipInfo objects) from the input ZIP file.
-
-    Args:
-        input_zip_path (str): Path to the input ZIP file.
-
-    Returns:
-        List[zipfile.ZipInfo]: A list of ZipInfo objects from the input ZIP.
-    """
-    with zipfile.ZipFile(input_zip_path, "r") as zf:
-        return zf.infolist()
-
-
-def create_images_dir(input_zip_path: str) -> str:
-    """
-    Create a unique images directory in the current working directory.
-
-    Args:
-        input_zip_path (str): The path to the input zip file.
-
-    Returns:
-        str: The path to the created images directory.
-    """
-    # Strip the extension and get the base name
-    zip_base_name = os.path.splitext(os.path.basename(input_zip_path))[0]
-    zip_hash = hashlib.md5(zip_base_name.encode()).hexdigest()[:8]
-    dir_name = f"ficimage_{zip_base_name}_{zip_hash}"
-
-    os.makedirs(dir_name, exist_ok=True)
-    return dir_name
-
-
-def clean_images_dir(dir_name: str) -> None:
-    """
-    Delete the directory containing temporary image files.
-
-    Args:
-        dir_name (str): Name of the directory.
-    """
-    if os.path.exists(dir_name):
-        shutil.rmtree(dir_name)
+FICHUB_ATTR = b"Exported with the assistance of FicHub.net"
+FICHUB_DOMAIN = b"FicHub.net"
 
 
 def extract_html_from_zip(input_zip_path: str) -> dict:
@@ -79,8 +24,6 @@ def extract_html_from_zip(input_zip_path: str) -> dict:
 
     with zipfile.ZipFile(input_zip_path, "r") as zf:
         for file_name in zf.namelist():
-            print(f"Found file: {file_name}")
-
             if file_name.endswith(".html"):
                 print(f"Processing HTML file: {file_name}")
                 with zf.open(file_name) as html_file:
@@ -93,7 +36,7 @@ def extract_html_from_zip(input_zip_path: str) -> dict:
 
 
 def modify_html(
-        content: str | bytes, images_dir: str, embed_images: bool, debug: bool = True
+        content: bytes, images_dir: str, embed_images: bool, verbose: bool = True
 ) -> bytes:
     """
     Modify the HTML content to replace image placeholders with downloaded images.
@@ -102,7 +45,7 @@ def modify_html(
         content (bytes): The original HTML content.
         images_dir (str): Directory to store downloaded images.
         embed_images (bool): If True, save the images directly in the HTML file as base64 images.
-        debug (bool): If True, enables debug output.
+        verbose (bool): If True, enables verbose output.
 
     Returns:
         bytes: The modified HTML content.
@@ -112,7 +55,7 @@ def modify_html(
     p_tags = soup.find_all("p")
     images = [i for i in p_tags if "[img:" in i.text]
 
-    if debug:
+    if verbose:
         print(f"Found {len(images)} images")
 
     for idx, image in enumerate(images):
@@ -125,9 +68,17 @@ def modify_html(
             print(f"Processing image {idx + 1}: {image_link}")
 
             # Download and process the image
-            (image_content, image_extension, image_media_type) = get_image_from_url(
-                image_link, "jpeg", True, 100_000
+            result = get_image_from_url(
+                image_link, state["default_image_format"],
+                state["compress_images"],
+                state["max_image_size"]
             )
+
+            if result is None:
+                print(f"Skipping image {idx + 1}: failed to download")
+                continue
+
+            image_content, image_extension, image_media_type = result
 
             if embed_images:
                 base64_data = base64.b64encode(image_content).decode("utf-8")
@@ -136,21 +87,24 @@ def modify_html(
                 # Replace the placeholder with the inline base64 image
                 new_image = (
                     f"<img alt='Image {idx + 1}' "
-                    f"style='text-align: center; margin: 2em auto; display: block;' "
+                    f"style='text-align: center; margin: 2em auto; display: block; max-width: 100%;' "
                     f"src='{data_uri}' />"
                 )
             else:
-                image_path = os.path.join(
-                    images_dir, f"image_{idx + 1}.{image_extension.lower()}"
-                )
+                # Write into the temp dir (filesystem path)
+                filename = f"image_{idx + 1}.{image_extension.lower()}"
+                image_path = os.path.join(images_dir, filename)
                 with open(image_path, "wb") as img_file:
                     img_file.write(image_content)
+
+                # Use a relative path inside the zip (NOT the temp path)
+                zip_image_ref = os.path.join("images", filename).replace("\\", "/")
 
                 # Replace the original placeholder with the new image tag
                 new_image = (
                     f"<img alt='Image {idx + 1}' "
-                    f"style='text-align: center; margin: 2em auto; display: block;' "
-                    f"src='{image_path}' />"
+                    f"style='text-align: center; margin: 2em auto; display: block; max-width: 100%;' "
+                    f"src='{zip_image_ref}' />"
                 )
 
             image.replace_with(BeautifulSoup(new_image, "lxml"))
@@ -161,55 +115,87 @@ def modify_html(
     return str(soup).encode("utf-8")
 
 
-def process_zip(input_zip_path: str):
+def has_fichub_attribution(zip_path: str) -> bool:
     """
-    Process a zip file containing HTML files and replace image placeholders.
+    Check whether a ZIP looks like a FicHub Zipped HTML export.
 
-    Args:
-        input_zip_path (str): Path to the input zip file.
+    Reads only the first 64KB of each .html file in the archive and searches for FicHub's
+    attribution text ("Exported with the assistance of FicHub.net") near the top of the document.
+
+    :param zip_path: Path to the ZIP file to inspect.
+    :return: True if the ZIP contains a HTML file with the expected FicHub attribution; otherwise False.
     """
-    # Create a unique directory for images
-    _embed_images = True
+
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        for name in zf.namelist():
+            if not name.lower().endswith(".html"):
+                continue
+
+            with zf.open(name) as f:
+                head = f.read(64 * 1024)
+
+            if FICHUB_ATTR in head:
+                return True
+            if FICHUB_DOMAIN in head and b"Exported with the assistance" in head:
+                return True
+
+    return False
+
+
+def process_zip(input_zip_path: str, zip_embed_images: bool = False):
+    """
+    Process a ZIP archive that contains HTML files by replacing FicHub image placeholders
+    (e.g., “[img: …]” blocks pointing to URLs) with actual images downloaded from those URLs.
+
+    :param input_zip_path: Path to the input zip file.
+    :param zip_embed_images: If True, embed images into HTML as base64 data URIs. If False, store images as files
+                under `images/` in the output ZIP and reference them from HTML.
+    """
+
+    if not has_fichub_attribution(input_zip_path):
+        print("This is not a FicHub Zipped HTML File (Did you unpack a FicHub epub and pass it in?)")
+        return
+
     zip_base_name = os.path.splitext(os.path.basename(input_zip_path))[0]
-    zip_hash = hashlib.md5(zip_base_name.encode()).hexdigest()[:8]
-    images_dir = f"ficimage_{zip_base_name}_{zip_hash}"
-
-    if not _embed_images:
-        os.makedirs(images_dir, exist_ok=True)
+    output_zip_path = f"[FicImage]{zip_base_name}.zip"
 
     try:
-        # Extract HTML files from the zip
-        html_files = extract_html_from_zip(input_zip_path)
+        if zip_embed_images:
+            # Extract HTML files from the zip
+            html_files = extract_html_from_zip(input_zip_path)
 
-        modified_files = {}
-        for file_name, content in html_files.items():
-            modified_content = modify_html(content, images_dir, _embed_images)
-            modified_files[file_name] = modified_content
+            modified_files = {}
+            for file_name, content in html_files.items():
+                modified_content = modify_html(content, "", zip_embed_images, state["verbose"])
+                modified_files[file_name] = modified_content
 
-        # Save the modified files back to a new zip
-        output_zip_path = f"[FicImage]{zip_base_name}.zip"
-        with zipfile.ZipFile(output_zip_path, "w") as zf:
-            for file_name, content in modified_files.items():
-                zf.writestr(file_name, content)
+            # Save the modified files back to a new zip
+            with zipfile.ZipFile(output_zip_path, "w") as zf:
+                for file_name, content in modified_files.items():
+                    zf.writestr(file_name, content)
+            return
 
-            if not _embed_images:
-                # Add the images directory and its contents to the zip
-                for root, _, files in os.walk(images_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        # Preserve the relative path of the images directory in the ZIP
-                        arcname = os.path.relpath(
-                            file_path, start=os.path.dirname(images_dir)
-                        )
-                        zf.write(file_path, arcname)
+        # Non-embed mode: use a temp directory and package images under images/
+        with tempfile.TemporaryDirectory(prefix="ficimage_") as images_dir:
 
-        print(f"Processed zip saved to {output_zip_path}")
+            html_files = extract_html_from_zip(input_zip_path)
+            modified_files = {
+                fn: modify_html(content, images_dir, False, state["verbose"])
+                for fn, content in html_files.items()
+            }
+
+            with zipfile.ZipFile(output_zip_path, "w") as zf:
+                for file_name, content in modified_files.items():
+                    zf.writestr(file_name, content)
+
+                # Write images into the zip under images/
+                for file in os.listdir(images_dir):
+                    file_path = os.path.join(images_dir, file)
+                    zf.write(file_path, arcname=f"images/{file}")
+
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        if not _embed_images:
-            clean_images_dir(images_dir)
 
 
 def update_zip(file_path: str):
-    process_zip(file_path)
+    process_zip(file_path, state["zip_embed_images"])
