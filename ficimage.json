@@ -1,5 +1,6 @@
 {
   "compress_images": true,
-  "default_image_format": "JPEG",
-  "max_image_size": 100000
+  "default_image_format": "WEBP",
+  "max_image_size": 100000,
+  "zip_embed_images": false
 }
