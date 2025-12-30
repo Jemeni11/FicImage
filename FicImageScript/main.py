@@ -81,7 +81,7 @@ def main() -> None:
     """This function updates the FicHub file with images."""
 
     parser = argparse.ArgumentParser(description="Update a FicHub file with images.",
-                                     epilog="Made with ❤️ by @Jemeni11 | Run --credits to learn more & show support")
+                                     epilog="Made with ♥ by @Jemeni11 | Run --credits to learn more & show support")
     parser.add_argument("-p", "--path", help="The path to the FicHub file.")
     parser.add_argument(
         "-c", "--config_file_path", help="The path to the ficimage.json file."
