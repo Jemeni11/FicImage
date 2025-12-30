@@ -6,103 +6,167 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 [//]: # (Types of changes)
+
 [//]: # (- **Added** for new features.)
+
 [//]: # (- **Changed** for changes in existing functionality.)
+
 [//]: # (- **Deprecated** for soon-to-be removed features.)
+
 [//]: # (- **Removed** for now removed features.)
+
 [//]: # (- **Fixed** for any bug fixes.)
+
 [//]: # (- **Security** in case of vulnerabilities.)
+
+## [5.0.0] - TBD
+
+### Added
+
+- Multi-format support: ZIP, PDF, and MOBI files in addition to EPUB
+- FicHub detection: Automatically validates files are from FicHub before processing
+- Image summary reports: Shows download success/failure stats after processing
+- CLI enhancements: --verbose, --update, and --credits flags
+- ZIP embedding option: zip_embed_images config to choose between base64 or file-based images
+- New project logo
+
+### Changed
+
+- BREAKING: Default image format changed from JPEG to WEBP (better compression)
+- BREAKING: Default max image size reduced from 1MB to 100KB
+- BREAKING: CLI argument changed from -p/--path_to_epub to -p/--path (supports all formats)
+- Architecture: Centralized config via global state dictionary (no more parameter passing everywhere)
+- Only creates output files if at least one image was successfully downloaded
+- Improved error handling for failed image downloads and corrupted files
+- Better cross-platform path handling (fixed Windows backslash issues)
+
+### Fixed
+
+- Improved handling of invalid/corrupted image data by catching `UnidentifiedImageError` during image
+  processing.
+- Improved/standardized verbose and config-check logging output.
+- Fixed crash when `get_image_from_url()` returns None by adding proper result validation before unpacking.
+- Fixed non-embed mode to write images with correct relative paths (images/...) in the output ZIP.
+- Fixed Windows path separator issues in ZIP image references (always uses forward slashes).
+- Fixed potential crash when `get_image_from_url()` returns `None` by adding proper validation.
+
+### Removed
+
+- Removed unused ZIP helper functions: `copy_zip()`, `extract_zip_metadata()`, `create_images_dir()`,
+  `clean_images_dir()`.
 
 ## [4.1.1] - 2024-09-18
 
 ### Changed
+
 - Changed the build system.
 
 ## [4.1.0] - 2024-04-17
 
 ### Added
+
 - Added a user agent string to help download imgur images.
 
 ## [4.0.0] - 2024-02-28
 
 ### Fixed
+
 - Fixed major file path issue preventing Windows users from using FicImage.
 
 ## [3.0.0] - 2023-10-30
 
 ### Security
-- Updated the `requests` dependency to ensure compatibility with version 2.31.0 or higher to 
-mitigate [CVE-2023-32681](https://nvd.nist.gov/vuln/detail/CVE-2023-32681) security issue.
+
+- Updated the `requests` dependency to ensure compatibility with version 2.31.0 or higher to
+  mitigate [CVE-2023-32681](https://nvd.nist.gov/vuln/detail/CVE-2023-32681) security issue.
 
 ### Changed
-- Modified requirements to use "compatible with" (>=) instead of "exact version" (==) when installing to prevent 
-potential conflicts with previously installed software.
 
+- Modified requirements to use "compatible with" (>=) instead of "exact version" (==) when installing to prevent
+  potential conflicts with previously installed software.
 
 ## [2.1.0] - 2023-07-22
 
 ### Fixed
-- [Issue #4](https://github.com/Jemeni11/FicImage/issues/4). Replaced manual string splitting/joining code 
-with `os.path` functions.
-- Syntax error in PYPI_README.rst. 
+
+- [Issue #4](https://github.com/Jemeni11/FicImage/issues/4). Replaced manual string splitting/joining code
+  with `os.path` functions.
+- Syntax error in PYPI_README.rst.
 
 ### Changed
-- Uncommented out the `[project]` and `[project-urls]` sections in `pyproject.toml` 
-as they are not redundant anymore. 
 
+- Uncommented out the `[project]` and `[project-urls]` sections in `pyproject.toml`
+  as they are not redundant anymore.
 
 ## [2.0.0] - 2023-07-22
 
 ### Fixed
-- [Issue #2](https://github.com/Jemeni11/FicImage/issues/2). A bug in the file path of the `load_config_json` function caused a `FileNotFoundError`. 
+
+- [Issue #2](https://github.com/Jemeni11/FicImage/issues/2). A bug in the file path of the `load_config_json` function
+  caused a `FileNotFoundError`.
 
 ### Added
-- Added a new `except` block to the `load_config_json` function. 
-This should make finding errors like [Issue #2](https://github.com/Jemeni11/FicImage/issues/2) easier.
+
+- Added a new `except` block to the `load_config_json` function.
+  This should make finding errors like [Issue #2](https://github.com/Jemeni11/FicImage/issues/2) easier.
 - Added a new command (-v) to return the project version.
 - Added a new command (-r) to update all files in the directory path given and its subdirectories.
 
 ### Changed
+
 - Moved the project version from `__init__.py` to `main.py`.
 - `path_to_epub` is now an optional command.
-- FicImage will now save new epubs in the same location 
-as the old epub instead of the current working directory.
+- FicImage will now save new epubs in the same location
+  as the old epub instead of the current working directory.
 
 ## [1.0.2] - 2023-05-12
 
 ### Added
 
 - Added the project version to `__init__.py`.
-- Created a README file for PyPI (PYPI_README.rst). 
-This file replaces the old README file as the long description for the package.
-The old README still exists as `README.md` and is still used for GitHub.
+- Created a README file for PyPI (PYPI_README.rst).
+  This file replaces the old README file as the long description for the package.
+  The old README still exists as `README.md` and is still used for GitHub.
 
 ### Changed
-- Updated the file paths in `setup.py` and `pyproject.toml` to point to 
-the new `PYPI_README.rst` file. 
-- Commented out the `[project]` and `[project-urls]` sections in `pyproject.toml` 
-as they were redundant. 
+
+- Updated the file paths in `setup.py` and `pyproject.toml` to point to
+  the new `PYPI_README.rst` file.
+- Commented out the `[project]` and `[project-urls]` sections in `pyproject.toml`
+  as they were redundant.
 
 ### Fixed
-- Fixed the long description content type in `setup.py` and `pyproject.toml` to 
-match the new README format. The content type was updated from `text/markdown` to `text/x-rst`.
+
+- Fixed the long description content type in `setup.py` and `pyproject.toml` to
+  match the new README format. The content type was updated from `text/markdown` to `text/x-rst`.
 
 ## [1.0.1] - 2023-05-11
 
 ### Added
+
 - Improved logging by adding an overview of downloaded images.
 - Added a Changelog
 
 ## [1.0.0] - 2023-05-08
+
 - Released FicImageScript
 
+[5.0.0]: https://github.com/Jemeni11/FicImage/compare/v4.1.1...v5.0.0
 
 [4.1.1]: https://github.com/Jemeni11/FicImage/compare/v4.1.0...v4.1.1
+
 [4.1.0]: https://github.com/Jemeni11/FicImage/compare/v4.0.0...v4.1.0
+
 [4.0.0]: https://github.com/Jemeni11/FicImage/compare/v3.0.0...v4.0.0
+
 [3.0.0]: https://github.com/Jemeni11/FicImage/compare/v2.1.0...v3.0.0
+
 [2.1.0]: https://github.com/Jemeni11/FicImage/compare/v2.0.0...v2.1.0
+
 [2.0.0]: https://github.com/Jemeni11/FicImage/compare/v1.0.2...v2.0.0
+
 [1.0.2]: https://github.com/Jemeni11/FicImage/compare/v1.0.1...v1.0.2
+
 [1.0.1]: https://github.com/Jemeni11/FicImage/compare/v1.0.0...v1.0.1
+
 [1.0.0]: https://github.com/Jemeni11/FicImage/releases/tag/v1.0.0
