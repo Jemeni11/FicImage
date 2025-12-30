@@ -1,45 +1,52 @@
 [project]
 name = "FicImageScript"
-version = "4.1.1"
+version = "5.0.0"
 authors = [
     { name = "Emmanuel C. Jemeni", email = "jemenichinonso11@gmail.com" }
 ]
-description = "FicImage is an application designed to enhance the reading experience of FicHub epubs."
+description = "FicImage is an application designed to enhance the reading experience of FicHub files."
 readme = "PYPI_README.rst"
-requires-python = ">=3.6"
-license = { file = "LICENSE" }
-keywords = ["fanfiction", "fichub", "ficimage", "image"]
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["fanfiction", "fichub", "ficimage", "image", "epub", "html", "zip"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Internet :: WWW/HTTP",
+    "Environment :: Console",
+    "Natural Language :: English",
 ]
 dependencies = [
-    'beautifulsoup4>=4.12.2',
-    'certifi>=2022.12.7',
-    'charset-normalizer>=3.1.0',
-    'EbookLib>=0.18',
-    'idna>=3.4',
-    'lxml>=4.9.2',
-    'Pillow>=9.5.0',
-    'requests>=2.31.0',
-    'six>=1.16.0',
-    'soupsieve>=2.4.1',
-    'urllib3>=1.26.15'
+    'beautifulsoup4>=4.13.4',
+    'certifi>=2025.4.26',
+    'charset-normalizer>=3.4.2',
+    'EbookLib>=0.19',
+    'idna>=3.10',
+    'lxml>=5.4.0',
+    'packaging>=25.0',
+    'Pillow>=11.2.1',
+    'pymupdf>=1.25.5',
+    'requests>=2.32.3',
+    'six>=1.17.0',
+    'soupsieve>=2.7',
+    'typing-extensions>=4.13.2',
+    'urllib3>=2.4.0'
 ]
 
-[project.scripts]  # Optional
+[project.scripts]
 ficimage = "FicImageScript.main:main"
 
 [project.urls]
 "Homepage" = "https://github.com/Jemeni11/FicImage"
 "Bug Tracker" = "https://github.com/Jemeni11/FicImage/issues"
+"Changelog" = "https://github.com/Jemeni11/FicImage/blob/main/CHANGELOG.md"
+"Funding" = "https://buymeacoffee.com/jemeni11"
 
 [build-system]
 # These are the assumed default build requirements from pip:
-# https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
-#requires = ["setuptools>=43.0.0", "wheel"]
+# https://pip.pypa.io/en/stable/reference/build-system/#build-time-dependencies
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
