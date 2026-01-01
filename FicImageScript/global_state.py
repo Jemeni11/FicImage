@@ -1,8 +1,22 @@
-state = {
-    "compress_images": True,  # Default: Compress images
-    "default_image_format": "WEBP",  # Default: Image format (JPEG/PNG/WEBP)
-    "max_image_size": 100_000,  # Default: Max image size in bytes
-    "verbose": False,  # Default: Logger messages
-    "zip_embed_images": False,  # Default: Whether to embed images or not
-    "version": "5.0.0",  # Current version of the tool
+from typing import TypedDict, Literal
+
+ImageFormat = Literal["webp", "jpeg", "jpg", "png"]
+
+
+class State(TypedDict):
+    compress_images: bool
+    default_image_format: ImageFormat
+    max_image_size: int
+    verbose: bool
+    zip_embed_images: bool
+    version: str
+
+
+state: State = {
+    "compress_images": True,
+    "default_image_format": "webp",
+    "max_image_size": 100_000,
+    "verbose": False,
+    "zip_embed_images": False,
+    "version": "5.0.0",
 }
