@@ -53,7 +53,8 @@ def modify_html(content: bytes, images_dir: str, embed_images: bool) -> tuple[by
     total_images = len(images)
     downloaded_count = 0
 
-    print_verbose(f"Found {total_images} image{'' if total_images == 1 else 's'}")
+    print_verbose(
+        f"Found {total_images} image{'' if total_images == 1 else 's'}")
 
     for index, image in enumerate(images, start=1):
         if image is None:
@@ -61,7 +62,11 @@ def modify_html(content: bytes, images_dir: str, embed_images: bool) -> tuple[by
             continue
 
         try:
-            image_link = image.a["href"]
+            if not hasattr(image, "a") or image.a is None:
+                print(f"Skipping image {index}: no link found")
+                continue
+
+            image_link = str(image.a["href"])
             print(f"Processing image {index}: {image_link}")
 
             # Download and process the image
@@ -96,7 +101,8 @@ def modify_html(content: bytes, images_dir: str, embed_images: bool) -> tuple[by
                     img_file.write(image_content)
 
                 # Use a relative path inside the zip (NOT the temp path)
-                zip_image_ref = os.path.join("images", filename).replace("\\", "/")
+                zip_image_ref = os.path.join(
+                    "images", filename).replace("\\", "/")
 
                 # Replace the original placeholder with the new image tag
                 new_image = (
@@ -157,7 +163,6 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
     zip_base_name = os.path.splitext(os.path.basename(input_zip_path))[0]
     output_zip_path = f"[FicImage]{zip_base_name}.zip"
 
-    verbose = state.get("verbose", False)
     images_downloaded = {}
 
     try:
@@ -166,7 +171,8 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
         if zip_embed_images:
             modified_files = {}
             for file_name, content in html_files.items():
-                modified_content, downloaded, total = modify_html(content, "", zip_embed_images)
+                modified_content, downloaded, total = modify_html(
+                    content, "", zip_embed_images)
                 modified_files[file_name] = modified_content
                 images_downloaded[file_name] = [downloaded, total]
 
@@ -182,7 +188,8 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
             modified_files = {}
 
             for fn, content in html_files.items():
-                modified_content, downloaded, total = modify_html(content, images_dir, False)
+                modified_content, downloaded, total = modify_html(
+                    content, images_dir, False)
                 modified_files[fn] = modified_content
                 images_downloaded[fn] = [downloaded, total]
 
