@@ -7,7 +7,8 @@ from .utils import (
     file_search,
     check_for_update,
     identify_file_type,
-    show_credits
+    show_credits,
+    validate_format
 )
 from .epub import update_epub
 from .zip import update_zip
@@ -15,7 +16,7 @@ from .pdf import update_pdf
 from .mobi import update_mobi
 
 
-def initialize_state(config_file_path: str = None) -> None:
+def initialize_state(config_file_path: str | None = None) -> None:
     """
     Update the global state with config values from a file if it exists.
 
@@ -44,13 +45,12 @@ def initialize_state(config_file_path: str = None) -> None:
             "zip_embed_images", state["zip_embed_images"]
         )
 
-    state["default_image_format"] = state["default_image_format"].upper()
-    if state["default_image_format"] not in ("JPG", "JPEG", "PNG", "WEBP"):
-        print(
-            f"[Config Warning]: Invalid image format '{state['default_image_format']}'. "
-            f"Defaulting to WEBP."
-        )
-        state["default_image_format"] = "WEBP"
+    try:
+        state["default_image_format"] = validate_format(
+            state["default_image_format"])
+    except ValueError as e:
+        print(f"[Config Warning]: {e} Defaulting to webp.")
+        state["default_image_format"] = "webp"
 
 
 def update_file(file_path: str):
