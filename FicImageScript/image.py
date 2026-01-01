@@ -289,7 +289,7 @@ def compress_image(image: BytesIO, max_size: int) -> Image.Image:
     )
 
     compressed_image = original_image.resize(
-        (new_width, new_height), resample=Image.LANCZOS)
+        (new_width, new_height), resample=Image.Resampling.LANCZOS)
 
     # Optional: Double-check the compressed size
     with BytesIO() as temp_output:
