@@ -3,10 +3,27 @@ import sys
 import json
 from urllib import request, error
 from packaging.version import parse
-from .global_state import state
+from .global_state import state, ImageFormat
+from typing import TypeGuard
+
+VALID_FORMATS: set[ImageFormat] = {"webp", "jpeg", "jpg", "png"}
 
 
-def config_check(directory_path: str = None) -> tuple[bool, str]:
+def is_valid_format(value: str) -> TypeGuard[ImageFormat]:
+    """Type guard to check if a string is a valid ImageFormat."""
+    return value.lower() in VALID_FORMATS
+
+
+def validate_format(format_str: str) -> ImageFormat:
+    """Validate and normalize image format from CLI input."""
+    normalized = format_str.lower()
+    if is_valid_format(normalized):
+        return normalized
+    raise ValueError(
+        f"Invalid format '{format_str}'. Must be one of: {', '.join(VALID_FORMATS)}")
+
+
+def config_check(directory_path: str | None = None) -> tuple[bool, str]:
     """
     This function checks if ficimage.json exists in the given directory path
     and returns a tuple containing a boolean and a string (the directory path).
@@ -26,7 +43,7 @@ def config_check(directory_path: str = None) -> tuple[bool, str]:
         file_path = os.path.join(current_dir, "ficimage.json")
 
         if os.path.isfile(file_path):
-            print(f"[Config File Check]: ficimage.json found in current directory!")
+            print("[Config File Check]: ficimage.json found in current directory!")
             return True, current_dir
 
         directory_path = os.path.expanduser("~")
@@ -103,7 +120,8 @@ def identify_file_type(file_path: str) -> str:
             file_header = f.read(8)
 
         # Check for file signatures (magic numbers)
-        if file_header.startswith(b"PK"):  # ZIP and EPUB share the same magic number
+        # ZIP and EPUB share the same magic number
+        if file_header.startswith(b"PK"):
             if file_path.lower().endswith(".epub"):
                 return "epub"
             return "zip"
@@ -152,11 +170,12 @@ def check_for_update(current_version: str):
             latest_version = data["info"]["version"]
 
         if parse(latest_version) > parse(current_version):
-            print(f"Update available: v{latest_version}. You're on v{current_version}.")
+            print(
+                f"Update available: v{latest_version}. You're on v{current_version}.")
             print("Run `pip install --upgrade FicImageScript` to update.")
         else:
             print(f"You're on the latest version: v{current_version}.")
-            print("💖 Enjoying FicImage? Check out `ficimage --credits`")
+            print("♥ Enjoying FicImage? Check out `ficimage --credits`")
 
     except error.URLError as e:
         print(f"Unable to check for updates: {e}")
@@ -221,6 +240,9 @@ Check out FicHub:
 I've also made other Fanfiction tools like FicRadar (https://github.com/Jemeni11/FicRadar/), 
 TalesTrove (https://github.com/Jemeni11/TalesTrove) and contributed to 
 WebToEpub (https://github.com/dteviot/WebToEpub) and Leech.py (https://github.com/kemayo/leech).
+
+Thank you
+( ͡• ͜ʖ ͡• )
 """)
 
     print("\nFind me at:")
