@@ -3,7 +3,6 @@ from io import BytesIO
 from base64 import b64decode
 import math
 import requests
-from typing import Tuple
 from .utils import print_verbose
 
 SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "gif", "webp", "svg"}
@@ -67,7 +66,8 @@ def _convert_to_new_format(image_bytestream: bytes | str, image_format: str) -> 
     """
     new_image = BytesIO()
     try:
-        Image.open(image_bytestream).save(new_image, format=image_format.upper())
+        Image.open(image_bytestream).save(
+            new_image, format=image_format.upper())
         new_image.name = f"cover.{image_format.lower()}"
         new_image.seek(0)
         return new_image
@@ -82,7 +82,7 @@ def _convert_to_new_format(image_bytestream: bytes | str, image_format: str) -> 
 
 def handle_base64_image(
         url: str, image_format: str, compress_images: bool, max_image_size: int
-) -> Tuple[bytes, str, str]:
+) -> tuple[bytes, str, str]:
     """
     Handles Base64-encoded image data, optionally compressing or converting it.
     :param url: The Base64 image data URL.
@@ -103,8 +103,16 @@ def handle_base64_image(
         print_verbose(
             f"Image format {file_ext} not supported, converting to {image_format}"
         )
+        converted = _convert_to_new_format(imgdata, image_format)
+        if isinstance(converted, BytesIO):
+            imgdata = converted.read()
+        elif isinstance(converted, bytes):
+            imgdata = converted
+        else:
+            # Handle str case - convert to bytes
+            imgdata = converted.encode() if isinstance(converted, str) else imgdata
         return (
-            _convert_to_new_format(imgdata, image_format).read(),
+            imgdata,
             image_format.lower(),
             f"image/{image_format.lower()}",
         )
@@ -118,7 +126,7 @@ def handle_base64_image(
 
 def handle_image_data(
         content: bytes, image_format: str, compress_images: bool, max_image_size: int
-) -> Tuple[bytes, str, str]:
+) -> tuple[bytes, str, str] | None:
     """
     Processes raw image content and optionally compresses or converts it.
     :param content: The raw image content as bytes.
@@ -133,8 +141,16 @@ def handle_image_data(
     try:
         PIL_image = Image.open(image)
     except UnidentifiedImageError:
-        print("Unable to identify image format")
-        print_verbose("Invalid or corrupted image data")
+        print("Could not decode downloaded content as an image.")
+        print_verbose(
+            "This can happen if the URL returns an error page (e.g. 404 HTML), "
+            "the file is corrupted/truncated, or the image format isn't supported by Pillow."
+        )
+        print_verbose(
+            "Check the URL in your browser. If it loads as an image, please run `ficimage  --credits` "
+            "(it contains contact links) and contact me with the image URL so it can be fixed."
+        )
+        return None
 
     img_format = str(PIL_image.format)
 
@@ -153,7 +169,7 @@ def handle_image_data(
 
 def get_image_from_url(
         url: str, image_format: str, compress_images: bool, max_image_size: int
-) -> Tuple[bytes, str, str]:
+) -> None | tuple[bytes, str, str]:
     """
     Downloads and processes an image from a URL.
     :param url: The URL of the image.
@@ -177,13 +193,23 @@ def get_image_from_url(
                 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                               "Chrome/122.0.0.0 Safari/537.36"
             }
-            response = session.get(url, stream=True, headers=headers)
 
-            mime_type = response.headers.get("content-type", "").split("/")[-1]
-            if mime_type == "svg+xml":
-                return response.content, "svg", "image/svg+xml"
+            with session.get(url, stream=True, headers=headers) as response:
+                try:
+                    response.raise_for_status()
+                except requests.exceptions.HTTPError:
+                    print(
+                        f"HTTP error {response.status_code} downloading image: {url}")
+                    print_verbose(
+                        f"Response content-type: {response.headers.get('content-type')}")
+                    return None
 
-            return handle_image_data(response.content, image_format, compress_images, max_image_size)
+                mime_type = response.headers.get(
+                    "content-type", "").split("/")[-1]
+                if mime_type == "svg+xml":
+                    return response.content, "svg", "image/svg+xml"
+
+                return handle_image_data(response.content, image_format, compress_images, max_image_size)
 
     except requests.RequestException as e:
         print(f"Network error downloading image from url: {url}")
@@ -195,7 +221,7 @@ def get_image_from_url(
 
 
 # --- Image Compression Functions ---
-def calculate_target_pixel_count(max_size: int, bytes_per_pixel: int) -> float:
+def calculate_target_pixel_count(max_size: int, bytes_per_pixel: float | int) -> float:
     """
     Estimate the target pixel count to fit within the maximum size.
 
@@ -226,11 +252,13 @@ def compress_image(image: BytesIO, max_size: int) -> Image.Image:
         "CMYK": 4,  # 4 bytes per pixel (CMYK color space)
         "YCbCr": 3,  # 3 bytes per pixel (JPEG color space)
     }
-    bytes_per_pixel = mode_to_bpp.get(original_image.mode, 4)  # Default to RGBA
+    bytes_per_pixel = mode_to_bpp.get(
+        original_image.mode, 4)  # Default to RGBA
 
     original_size = len(image.getvalue())
     print_verbose(f"Original image size: {get_size_format(original_size)}")
-    print_verbose(f"Image mode: {original_image.mode}, bytes per pixel: {bytes_per_pixel}")
+    print_verbose(
+        f"Image mode: {original_image.mode}, bytes per pixel: {bytes_per_pixel}")
 
     if original_size <= max_size:
         print_verbose(
@@ -243,12 +271,14 @@ def compress_image(image: BytesIO, max_size: int) -> Image.Image:
     )
 
     # Calculate the target pixel count and the scale factor
-    target_pixel_count = calculate_target_pixel_count(max_size, bytes_per_pixel)
+    target_pixel_count = calculate_target_pixel_count(
+        max_size, bytes_per_pixel)
     original_pixel_count = original_image.size[0] * original_image.size[1]
     scale_factor = math.sqrt(target_pixel_count / original_pixel_count)
 
     if scale_factor >= 1:
-        print_verbose("Image already fits within the size; no resizing needed.")
+        print_verbose(
+            "Image already fits within the size; no resizing needed.")
         return original_image
 
     # Resize the image
@@ -258,11 +288,13 @@ def compress_image(image: BytesIO, max_size: int) -> Image.Image:
         f"Resizing image from {original_image.size} to ({new_width}, {new_height})..."
     )
 
-    compressed_image = original_image.resize((new_width, new_height), resample=Image.LANCZOS)
+    compressed_image = original_image.resize(
+        (new_width, new_height), resample=Image.LANCZOS)
 
     # Optional: Double-check the compressed size
     with BytesIO() as temp_output:
-        compressed_image.save(temp_output, format="PNG")  # Adjust format as needed
+        # Adjust format as needed
+        compressed_image.save(temp_output, format="PNG")
         compressed_size = len(temp_output.getvalue())
         print_verbose(
             f"Compressed image size: {get_size_format(compressed_size)}"
@@ -289,7 +321,8 @@ def PIL_Image_to_bytes(pil_image: Image.Image, image_format: str) -> bytes:
             try:
                 frames.append(current)
                 pil_image.seek(pil_image.tell() + 1)
-                current = Image.alpha_composite(current, pil_image.convert("RGBA"))
+                current = Image.alpha_composite(
+                    current, pil_image.convert("RGBA"))
             except EOFError:
                 break
         frames[0].save(
