@@ -2,42 +2,33 @@
 name = "FicImageScript"
 version = "5.0.0"
 authors = [
-    { name = "Emmanuel C. Jemeni", email = "jemenichinonso11@gmail.com" }
+    { name = "Emmanuel C. Jemeni", email = "jemenichinonso11@gmail.com" },
 ]
 description = "FicImage is an application designed to enhance the reading experience of FicHub files."
 readme = "PYPI_README.rst"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["fanfiction", "fichub", "ficimage", "image", "epub", "html", "zip"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Internet :: WWW/HTTP",
     "Environment :: Console",
     "Natural Language :: English",
 ]
 dependencies = [
-    'beautifulsoup4>=4.14.3',
-    'certifi>=2025.11.12',
-    'charset-normalizer>=3.4.4',
-    'ebooklib>=0.20',
-    'idna>=3.11',
-    'lxml>=6.0.2',
-    'packaging>=25.0',
-    'pillow>=12.0.0',
-    'pymupdf>=1.26.7',
-    'requests>=2.32.5',
-    'six>=1.17.0',
-    'soupsieve>=2.8.1',
-    'typing-extensions>=4.15.0',
-    'urllib3>=2.6.2',
+    "beautifulsoup4>=4.15.0",
+    "ebooklib>=0.20",
+    "httpx>=0.28.1",
+    "lxml>=6.1.1",
+    "packaging>=26.2",
+    "pillow>=12.2.0",
 ]
 
 [project.scripts]
-ficimage = "FicImageScript.main:main"
+ficimage = "ficimagescript.main:main"
 
 [project.urls]
 "Homepage" = "https://github.com/Jemeni11/FicImage"
@@ -46,7 +37,34 @@ ficimage = "FicImageScript.main:main"
 "Funding" = "https://buymeacoffee.com/jemeni11"
 
 [build-system]
-# These are the assumed default build requirements from pip:
-# https://pip.pypa.io/en/stable/reference/build-system/#build-time-dependencies
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.11.23,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["ruff>=0.15.19", "ty>=0.0.53"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = [
+    "F",    # Pyflakes rules
+    "W",    # PyCodeStyle warnings
+    "E",    # PyCodeStyle errors
+    "I",    # Sort imports properly
+    "UP",   # Warn if certain things can changed due to newer Python versions
+    "C4",   # Catch incorrect use of comprehensions, dict, list, etc
+    "ISC",  # Good use of string concatenation
+    "ICN",  # Use common import conventions
+    "RET",  # Good return practices
+    "SIM",  # Common simplification rules
+    "TID",  # Some good import practices
+    "TC",   # Enforce importing certain types in a TYPE_CHECKING block
+    "PTH",  # Use pathlib instead of os.path
+    "TD",   # Be diligent with TODO comments
+    "FURB", # Suggest more idiomatic Python patterns
+    "B",    # https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+]
+
+[tool.ty.rules]
+unresolved-import = "warn"
