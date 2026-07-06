@@ -1,22 +1,14 @@
 import argparse
 import sys
-from .global_state import state
-from .utils import (
-    config_check,
-    load_config_json,
-    file_search,
-    check_for_update,
-    identify_file_type,
-    show_credits,
-    validate_format
-)
-from .epub import update_epub
-from .zip import update_zip
-from .pdf import update_pdf
-from .mobi import update_mobi
+from pathlib import Path
+
+from .config import config_check, load_config_json, state, validate_format
+from .formats import update_epub, update_zip
+from .utils.files import file_search, identify_file_type
+from .utils.update import check_for_update, show_credits
 
 
-def initialize_state(config_file_path: str | None = None) -> None:
+def initialize_state(config_file_path: Path | None = None) -> None:
     """
     Update the global state with config values from a file if it exists.
 
@@ -46,8 +38,7 @@ def initialize_state(config_file_path: str | None = None) -> None:
         )
 
     try:
-        state["default_image_format"] = validate_format(
-            state["default_image_format"])
+        state["default_image_format"] = validate_format(state["default_image_format"])
     except ValueError as e:
         print(f"[Config Warning]: {e} Defaulting to webp.")
         state["default_image_format"] = "webp"
@@ -66,10 +57,13 @@ def update_file(file_path: str):
         update_function = update_epub
     elif file_type == "zip":
         update_function = update_zip
-    elif file_type == "pdf":
-        update_function = update_pdf
-    elif file_type == "mobi":
-        update_function = update_mobi
+    elif file_type in ("pdf", "mobi"):
+        print(
+            f"[Unsupported] {file_type.upper()} is not supported. "
+            "For best results, use an EPUB file and convert it to "
+            f"{file_type.upper()} using a tool like Calibre."
+        )
+        return
 
     if update_function:
         update_function(file_path)
@@ -80,8 +74,11 @@ def update_file(file_path: str):
 def main() -> None:
     """This function updates the FicHub file with images."""
 
-    parser = argparse.ArgumentParser(description="Update a FicHub file with images.",
-                                     epilog="Made with ♥ by @Jemeni11 | Run --credits to learn more & show support")
+    parser = argparse.ArgumentParser(
+        description="Update a FicHub file with images.",
+        epilog="Made with <3 by Emmanuel Jemeni | \
+                Send Feedback: https://tally.so/r/7Rjpgz?project=FicImage",
+    )
     parser.add_argument("-p", "--path", help="The path to the FicHub file.")
     parser.add_argument(
         "-c", "--config_file_path", help="The path to the ficimage.json file."
@@ -108,9 +105,7 @@ def main() -> None:
         action="store_true",
     )
     parser.add_argument(
-        "--credits",
-        help="Show credits and support information",
-        action="store_true"
+        "--credits", help="Show credits and support information", action="store_true"
     )
     args = parser.parse_args()
 

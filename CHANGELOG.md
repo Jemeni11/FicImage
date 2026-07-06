@@ -23,18 +23,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Multi-format support: ZIP, PDF, and MOBI files in addition to EPUB
+- ZIP support alongside EPUB (with base64 embedding or filesystem image modes)
 - FicHub detection: Automatically validates files are from FicHub before processing
 - Image summary reports: Shows download success/failure stats after processing
 - CLI enhancements: --verbose, --update, and --credits flags
 - ZIP embedding option: zip_embed_images config to choose between base64 or file-based images
 - New project logo
+- `py.typed` marker (PEP 561) for downstream type-checkers
 
 ### Changed
 
-- BREAKING: Default image format changed from JPEG to WEBP (better compression)
-- BREAKING: Default max image size reduced from 1MB to 100KB
-- BREAKING: CLI argument changed from -p/--path_to_epub to -p/--path (supports all formats)
+- **BREAKING:** Default image format changed from JPEG to WEBP
+- **BREAKING:** Default max image size reduced from 1MB to 100KB
+- **BREAKING:** CLI argument changed from `-p/--path_to_epub` to `-p/--path`
+- **BREAKING:** Package restructured to `src/` layout; import paths changed accordingly
+- Replaced `requests` with `httpx` for HTTP calls
+- Replaced `os.path` with `pathlib.Path` throughout
+- Refactored monolithic `utils.py` into `utils/{files,logging,update}.py`
+- Consolidated global state and config into `config.py`
+- Organized format handlers under `formats/` subpackage
+- Only creates output files when at least one image is downloaded
 - Architecture: Centralized config via global state dictionary (no more parameter passing everywhere)
 - Only creates output files if at least one image was successfully downloaded
 - Improved error handling for failed image downloads and corrupted files
@@ -42,18 +50,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Improved handling of invalid/corrupted image data by catching `UnidentifiedImageError` during image
-  processing.
-- Improved/standardized verbose and config-check logging output.
+- `UnidentifiedImageError` now caught during image processing
+- Standardized verbose and config-check logging output
 - Fixed crash when `get_image_from_url()` returns None by adding proper result validation before unpacking.
-- Fixed non-embed mode to write images with correct relative paths (images/...) in the output ZIP.
-- Fixed Windows path separator issues in ZIP image references (always uses forward slashes).
-- Fixed potential crash when `get_image_from_url()` returns `None` by adding proper validation.
 
 ### Removed
 
 - Removed unused ZIP helper functions: `copy_zip()`, `extract_zip_metadata()`, `create_images_dir()`,
   `clean_images_dir()`.
+- **Plans for PDF and MOBI support.** Users are directed to use an EPUB source and convert with Calibre instead.
 
 ## [4.1.1] - 2024-09-18
 

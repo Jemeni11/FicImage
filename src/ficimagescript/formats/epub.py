@@ -1,10 +1,12 @@
-from .global_state import state
-import os
-from ebooklib import ITEM_DOCUMENT
-from ebooklib.epub import write_epub, read_epub, EpubItem
+from pathlib import Path
+
 from bs4 import BeautifulSoup
-from .image import get_image_from_url
-from .utils import print_verbose, print_image_summary
+from ebooklib import ITEM_DOCUMENT
+from ebooklib.epub import EpubItem, read_epub, write_epub
+
+from ficimagescript.config import state
+from ficimagescript.image import get_image_from_url
+from ficimagescript.utils.logging import print_image_summary, print_verbose
 
 
 def has_fichub_attribution_epub(epub_path: str) -> bool:
@@ -46,10 +48,7 @@ def update_epub(path_to_epub: str):
         default_image_format_config: str = state.get("default_image_format", "WEBP")
         max_image_size_config: int = state.get("max_image_size", 100_000)
 
-        # Use os.path.basename to get the file name with extension
-        file_name_with_ext = os.path.basename(path_to_epub)
-        # Use os.path.splitext to split the file name from its extension
-        file_name, _ = os.path.splitext(file_name_with_ext)
+        file_name = Path(path_to_epub).stem
 
         images_downloaded = {}
 
@@ -74,10 +73,9 @@ def update_epub(path_to_epub: str):
                         if image is None:
                             print("NoneType, Skipping")
                         else:
-                            image_link = image.a["href"]
+                            image_link = f"{image.a['href']}"  # ty:ignore[not-subscriptable]
                             print(
-                                f"[{item_file_name}] Image {index} "
-                                f"(out of {len(images)}). Source: {image_link}"
+                                f"[{item_file_name}] Image {index} (out of {len(images)}). Source: {image_link}"
                             )
                             result = get_image_from_url(
                                 url=image_link,
@@ -87,17 +85,16 @@ def update_epub(path_to_epub: str):
                             )
 
                             if result is None:
-                                print(f"Error with image {index}: failed to download, skipping ...")
+                                print(
+                                    f"Error with image {index}: failed to download, skipping ..."
+                                )
                                 continue
 
                             image_content, image_extension, image_media_type = result
 
                             images_downloaded[item.file_name][0] += 1
 
-                            image_path = (
-                                f"images/"
-                                f"{item_file_name}_image_{index}.{image_extension.lower()}"
-                            )
+                            image_path = f"images/{item_file_name}_image_{index}.{image_extension.lower()}"
                             new_image = (
                                 f"<img alt='Image {index} from {item.file_name}' "
                                 f"style='text-align: center; margin: 2em auto; display: block; max-width: 100%;'"
@@ -119,12 +116,14 @@ def update_epub(path_to_epub: str):
                 print(f"Error while parsing images: {error}")
 
         try:
-            total_number_of_images_downloaded = sum(v[0] for v in images_downloaded.values())
+            total_number_of_images_downloaded = sum(
+                v[0] for v in images_downloaded.values()
+            )
 
             if total_number_of_images_downloaded > 0:
                 try:
-                    epub_dir = os.path.dirname(path_to_epub)
-                    new_filename = os.path.join(epub_dir, f"[FicImage]{file_name}.epub")
+                    epub_dir = Path(path_to_epub).parent
+                    new_filename = epub_dir / f"[FicImage]{file_name}.epub"
                     print_verbose(f"Saving in directory: {epub_dir} ")
                     write_epub(new_filename, book)
                 except Exception as e:
