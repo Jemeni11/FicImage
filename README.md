@@ -30,6 +30,7 @@ Table of Contents
   - [Configuration Options](#configuration-options)
   - [`zip_embed_images` (Zipped HTML only)](#zip_embed_images-zipped-html-only)
   - [Default Configuration](#default-configuration)
+- [Why no PDF/MOBI support?](#why-no-pdfmobi-support)
 - [Planned Features](#planned-features)
 - [Why did I build this?](#why-did-i-build-this)
 - [Contributing](#contributing)
@@ -47,7 +48,7 @@ It scans the file for image placeholders, downloads the images, and replaces the
 
 > [!NOTE]
 >
-> Currently supports EPUB and zipped HTML. PDF/MOBI support is planned (see [Planned Features](#planned-features)).
+> Only supports EPUB and zipped HTML. PDF/MOBI support is not planned (see [Why no PDF/MOBI support?](#why-no-pdfmobi-support)).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -272,12 +273,24 @@ If no configuration file is found, FicImage will use the following default setti
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## Why no PDF/MOBI support?
+
+TL;DR: PDF and MOBI support is not planned. Use an EPUB source and convert with Calibre instead.
+
+I originally planned to support PDF and MOBI, but after testing, I realized that both formats have limitations that make them unsuitable for this tool:
+
+- PDF: While PDFs can contain images, they are not designed for reflowable text and often have complex layouts. Extracting and replacing images in PDFs is non-trivial and would require a different approach than what FicImage currently uses. The best I could do was for each image, I'd have to insert a new page with the image. The images could not be inserted in the middle of the text, which is a dealbreaker for me. I want to keep the images in their original context. Also, adding PDF support increased the size of this by a lot loll (Admittedly, I could have made that an optional dependency, but I didn't want to do that either).
+- MOBI: I couldn't find a python lib for this, and I didn't want to write one from scratch. It also doesn't support images as well as EPUB (and Zipped HTML) does.
+
+Really, you're better off using an EPUB source and converting it to PDF or MOBI with a tool like [Calibre](https://calibre-ebook.com/). This way, you can use FicImage to add images to the EPUB, then convert it to your desired format.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Planned Features
 
 - [ ] **Caching** – Avoid re-downloading the same image multiple times across chapters or files
 - [ ] **Concurrency** – Download multiple images at once to speed things up (with proper race condition handling)
 - [ ] **Better aspect ratio handling** – Resize images while preserving their original proportions more reliably
-- [ ] **Broader format support** – Add support for other FicHub formats like MOBI and PDF
 - [ ] **Improved WebP usage** – Convert static JPEGs and PNGs to WebP for better performance, instead of only using WebP for animated images
 - [ ] **Tests** – Start writing tests (sigh)
 
