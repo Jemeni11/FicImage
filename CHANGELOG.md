@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ruff linting config covering 15 rule sets (F, W, E, I, UP, C4, ISC, ICN, RET, SIM, TID, TC, PTH, TD, FURB, B)
 - `ty` type-checker config
 - GitHub CI workflow: ruff check/format + ty on Python 3.12, 3.13, 3.14
-- pre-commit config with ruff, ty, and file hygiene hooks
+- prek hook runner config (pre-commit hooks: ruff, ty, file hygiene)
 - GitHub FUNDING.yml (Sponsors, Polar, Buy Me a Coffee)
 
 ### Changed
