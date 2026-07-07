@@ -24,12 +24,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - ZIP support alongside EPUB (with base64 embedding or filesystem image modes)
-- FicHub detection: Automatically validates files are from FicHub before processing
-- Image summary reports: Shows download success/failure stats after processing
-- CLI enhancements: --verbose, --update, and --credits flags
-- ZIP embedding option: zip_embed_images config to choose between base64 or file-based images
+- FicHub detection: automatically validates files are from FicHub before processing
+- Image summary reports: shows download success/failure stats after processing
+- CLI enhancements: `--verbose`, `--update`, and `--credits` flags
+- ZIP embedding option: `zip_embed_images` config to choose between base64 or file-based images
 - New project logo
 - `py.typed` marker (PEP 561) for downstream type-checkers
+- `.python-version` file (Python 3.14) for uv/pyenv integration
+- Ruff linting config covering 15 rule sets (F, W, E, I, UP, C4, ISC, ICN, RET, SIM, TID, TC, PTH, TD, FURB, B)
+- `ty` type-checker config
+- GitHub CI workflow: ruff check/format + ty on Python 3.12, 3.13, 3.14
+- pre-commit config with ruff, ty, and file hygiene hooks
+- GitHub FUNDING.yml (Sponsors, Polar, Buy Me a Coffee)
 
 ### Changed
 
@@ -37,28 +43,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING:** Default max image size reduced from 1MB to 100KB
 - **BREAKING:** CLI argument changed from `-p/--path_to_epub` to `-p/--path`
 - **BREAKING:** Package restructured to `src/` layout; import paths changed accordingly
-- Replaced `requests` with `httpx` for HTTP calls
+- **BREAKING:** Entry point renamed from `FicImageScript.main:main` to `ficimagescript.main:main`
+- **BREAKING:** Minimum Python version raised from 3.9 to 3.12
+- Switched build backend from setuptools to `uv_build`
+- Replaced `requests`/`urllib3`/`certifi` HTTP stack with `httpx`/`httpcore`/`h11`/`anyio`
 - Replaced `os.path` with `pathlib.Path` throughout
 - Refactored monolithic `utils.py` into `utils/{files,logging,update}.py`
 - Consolidated global state and config into `config.py`
 - Organized format handlers under `formats/` subpackage
+- Centralized config via global state dictionary (no more parameter passing everywhere)
 - Only creates output files when at least one image is downloaded
-- Architecture: Centralized config via global state dictionary (no more parameter passing everywhere)
-- Only creates output files if at least one image was successfully downloaded
 - Improved error handling for failed image downloads and corrupted files
 - Better cross-platform path handling (fixed Windows backslash issues)
+- Bumped all dependency floor versions (beautifulsoup4≥4.15, lxml≥6.1.1, packaging≥26.2, pillow≥12.2)
+- Replaced `requirements.txt` with `uv.lock` + `pyproject.toml` for dependency management
+- README: added "Why no PDF/MOBI support?" section with rationale, removed from Planned Features
+
+### Removed
+
+- PDF and MOBI support; users are directed to use an EPUB source and convert with Calibre instead
+- Unused ZIP helper functions: `copy_zip()`, `extract_zip_metadata()`, `create_images_dir()`, `clean_images_dir()`
+- `pymupdf` dependency (PDF rendering library)
+- `six` dependency (Python 2 compatibility shim)
+- `requirements.txt` (replaced by uv-managed lockfile)
 
 ### Fixed
 
 - `UnidentifiedImageError` now caught during image processing
 - Standardized verbose and config-check logging output
-- Fixed crash when `get_image_from_url()` returns None by adding proper result validation before unpacking.
-
-### Removed
-
-- Removed unused ZIP helper functions: `copy_zip()`, `extract_zip_metadata()`, `create_images_dir()`,
-  `clean_images_dir()`.
-- **Plans for PDF and MOBI support.** Users are directed to use an EPUB source and convert with Calibre instead.
+- Crash when `get_image_from_url()` returns `None` — proper result validation added before unpacking
+- Non-embed ZIP mode now writes images with correct relative paths (`images/…`)
+- Windows path separator issues in ZIP image references (always uses forward slashes)
 
 ## [4.1.1] - 2024-09-18
 
