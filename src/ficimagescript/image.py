@@ -277,15 +277,17 @@ def PIL_Image_to_bytes(pil_image: Image.Image, image_format: str) -> bytes:
     """
     out_io = BytesIO()
     if image_format.lower() in ("gif", "webp"):
-        frames = []
-        current = pil_image.convert("RGBA")
-        while True:
-            try:
-                frames.append(current)
-                pil_image.seek(pil_image.tell() + 1)
-                current = Image.alpha_composite(current, pil_image.convert("RGBA"))
-            except EOFError:
-                break
+        n_frames = getattr(pil_image, "n_frames", 1)
+
+        if n_frames == 1:
+            pil_image.save(out_io, format=image_format, optimize=True)
+            return out_io.getvalue()
+
+        frames = [pil_image.convert("RGBA")]
+        for frame_idx in range(1, n_frames):
+            pil_image.seek(frame_idx)
+            frames.append(Image.alpha_composite(frames[-1], pil_image.convert("RGBA")))
+
         frames[0].save(
             out_io,
             format=image_format,
