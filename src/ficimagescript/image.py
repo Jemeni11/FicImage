@@ -145,7 +145,7 @@ def process_image_bytes(
     img_format = str(pil_image.format).lower()
 
     # Animated formats: preserve as-is
-    if img_format in ("gif", "webp"):
+    if img_format in ("gif", "webp") and getattr(pil_image, "is_animated", False):
         return (
             PIL_Image_to_bytes(pil_image, img_format),
             img_format,
@@ -154,10 +154,12 @@ def process_image_bytes(
 
     # For non-animated images, apply compression if requested
     if compress_images:
-        pil_image = compress_image(image_stream, max_image_size)
+        image_bytes = compress_image(pil_image, max_image_size, target_format)
+    else:
+        image_bytes = PIL_Image_to_bytes(pil_image, target_format)
 
     return (
-        PIL_Image_to_bytes(pil_image, target_format),
+        image_bytes,
         target_format,
         f"image/{target_format}",
     )
@@ -193,94 +195,99 @@ def get_image_from_url(
 
 
 # --- Image Compression Functions ---
-def calculate_target_pixel_count(max_size: int, bytes_per_pixel: float | int) -> float:
+QUALITY_STEPS = {
+    "jpeg": (95, 85, 75, 65, 55, 45),
+    "jpg": (95, 85, 75, 65, 55, 45),
+    "webp": (80, 70, 60, 50, 40, 30),
+}
+
+MIN_SCALE = 0.05
+MAX_RESIZE_ATTEMPTS = 4
+
+
+def compress_image(pil_image: Image.Image, max_size: int, image_format: str) -> bytes:
     """
-    Estimate the target pixel count to fit within the maximum size.
+    Encodes an image to fit within the specified size, lowering quality and resizing as needed.
 
-    :param max_size: Maximum file size in bytes.
-    :param bytes_per_pixel: Bytes used per pixel in the image format.
-    :return: Target pixel count.
-    """
-    return max_size / bytes_per_pixel
-
-
-def compress_image(image: BytesIO, max_size: int) -> Image.Image:
-    """
-    Compresses an image to fit within the specified size while maintaining its aspect ratio.
-
-    :param image: The input image as a byte stream.
+    :param pil_image: The image to compress.
     :param max_size: The maximum allowed image size in bytes.
-    :return: The compressed image as a PIL.Image.Image object.
+    :param image_format: The format the image will be saved as.
+    :return: The compressed image bytes.
     """
+    quality_steps = QUALITY_STEPS.get(image_format.lower(), ())
+    first_quality = quality_steps[0] if quality_steps else None
 
-    # Load the image and determine bytes per pixel from its mode
-    original_image = Image.open(image)
-    mode_to_bpp = {
-        "1": 1 / 8,  # 1 bit per pixel (monochrome)
-        "L": 1,  # 1 byte per pixel (grayscale)
-        "P": 1,  # 1 byte per pixel (palette-based)
-        "RGB": 3,  # 3 bytes per pixel (True color)
-        "RGBA": 4,  # 4 bytes per pixel (True color with alpha)
-        "CMYK": 4,  # 4 bytes per pixel (CMYK color space)
-        "YCbCr": 3,  # 3 bytes per pixel (JPEG color space)
-    }
-    bytes_per_pixel = mode_to_bpp.get(original_image.mode, 4)  # Default to RGBA
+    best_data = PIL_Image_to_bytes(pil_image, image_format, first_quality)
+    print_verbose(f"Encoded image size: {get_size_format(len(best_data))}")
 
-    original_size = len(image.getvalue())
-    print_verbose(f"Original image size: {get_size_format(original_size)}")
-    print_verbose(f"Image mode: {original_image.mode}, bytes per pixel: {bytes_per_pixel}")
-
-    if original_size <= max_size:
-        print_verbose(
-            f"Image is within the allowed size of {get_size_format(max_size)}, no \
-                compression needed."
-        )
-        return original_image
+    if len(best_data) <= max_size:
+        print_verbose(f"Image is within the allowed size of {get_size_format(max_size)}, no compression needed.")
+        return best_data
 
     print_verbose(f"Image exceeds {get_size_format(max_size)}, starting compression...")
 
-    # Calculate the target pixel count and the scale factor
-    target_pixel_count = calculate_target_pixel_count(max_size, bytes_per_pixel)
-    original_pixel_count = original_image.size[0] * original_image.size[1]
-    scale_factor = math.sqrt(target_pixel_count / original_pixel_count)
+    for quality in quality_steps[1:]:
+        data = PIL_Image_to_bytes(pil_image, image_format, quality)
+        print_verbose(f"Quality {quality}: {get_size_format(len(data))}")
+        if len(data) < len(best_data):
+            best_data = data
+        if len(data) <= max_size:
+            return data
 
-    if scale_factor >= 1:
-        print_verbose("Image already fits within the size; no resizing needed.")
-        return original_image
+    scale = 1.0
+    scale_data = best_data
 
-    # Resize the image
-    new_width = int(original_image.size[0] * scale_factor)
-    new_height = int(original_image.size[1] * scale_factor)
-    print_verbose(f"Resizing image from {original_image.size} to ({new_width}, {new_height})...")
+    for _ in range(MAX_RESIZE_ATTEMPTS):
+        # Encoded size roughly tracks pixel count, so the square root of the size ratio is the next scale.
+        next_scale = max(MIN_SCALE, scale * math.sqrt(max_size / len(scale_data)))
+        if next_scale >= scale:
+            break
 
-    compressed_image = original_image.resize((new_width, new_height), resample=Image.Resampling.LANCZOS)
+        scale = next_scale
+        new_size = (max(1, int(pil_image.width * scale)), max(1, int(pil_image.height * scale)))
+        resized = pil_image.resize(new_size, Image.Resampling.LANCZOS)
+        print_verbose(f"Resizing image from {pil_image.size} to {new_size}...")
 
-    # Optional: Double-check the compressed size
-    with BytesIO() as temp_output:
-        # Adjust format as needed
-        compressed_image.save(temp_output, format="PNG")
-        compressed_size = len(temp_output.getvalue())
-        print_verbose(f"Compressed image size: {get_size_format(compressed_size)}")
+        scale_data = b""
+        for quality in quality_steps or (None,):
+            quality_label = quality if quality is not None else "default"
+            data = PIL_Image_to_bytes(resized, image_format, quality)
+            print_verbose(f"Quality {quality_label}: {get_size_format(len(data))}")
+            if not scale_data or len(data) < len(scale_data):
+                scale_data = data
+            if len(data) <= max_size:
+                return data
 
-        if compressed_size > max_size:
-            print_verbose("Warning: Compressed image still exceeds max size.")
+        if len(scale_data) < len(best_data):
+            best_data = scale_data
 
-    return compressed_image
+    print_verbose(
+        f"Warning: could not compress image below {get_size_format(max_size)}; "
+        f"using the smallest result ({get_size_format(len(best_data))})."
+    )
+    return best_data
 
 
-def PIL_Image_to_bytes(pil_image: Image.Image, image_format: str) -> bytes:
+def PIL_Image_to_bytes(pil_image: Image.Image, image_format: str, quality: int | None = None) -> bytes:
     """
     Converts a PIL.Image.Image object to a byte stream.
     :param pil_image: The input PIL image.
     :param image_format: The target format for the image.
+    :param quality: Optional encoder quality for lossy formats (JPEG and WebP).
     :return: The image data as bytes.
     """
     out_io = BytesIO()
-    if image_format.lower() in ("gif", "webp"):
+    image_format = image_format.lower()
+
+    save_options: dict[str, int | bool] = {"optimize": True}
+    if quality is not None:
+        save_options["quality"] = quality
+
+    if image_format in ("gif", "webp"):
         n_frames = getattr(pil_image, "n_frames", 1)
 
         if n_frames == 1:
-            pil_image.save(out_io, format=image_format, optimize=True)
+            pil_image.save(out_io, format=image_format, **save_options)
             return out_io.getvalue()
 
         frames = [pil_image.convert("RGBA")]
@@ -293,15 +300,16 @@ def PIL_Image_to_bytes(pil_image: Image.Image, image_format: str) -> bytes:
             format=image_format,
             save_all=True,
             append_images=frames[1:],
-            optimize=True,
             loop=0,
+            **save_options,
         )
         return out_io.getvalue()
 
-    if image_format.lower() in ["jpeg", "jpg"]:
+    if image_format in ("jpeg", "jpg"):
         background_img = Image.new("RGBA", pil_image.size, "white")
         background_img.paste(pil_image.convert("RGBA"), (0, 0), pil_image.convert("RGBA"))
         pil_image = background_img.convert("RGB")
+        save_options.setdefault("quality", 95)
 
-    pil_image.save(out_io, format=image_format, optimize=True, quality=95)
+    pil_image.save(out_io, format=image_format, **save_options)
     return out_io.getvalue()
