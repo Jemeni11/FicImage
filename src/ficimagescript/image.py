@@ -50,98 +50,83 @@ def get_size_format(b, factor=1000, suffix="B"):
     return f"{b:.2f}Y{suffix}"
 
 
-# --- Image Transformation Functions ---
-
-
-def transform_imgur_url(url: str) -> str:
-    """
-    Transforms an Imgur page URL into a direct image URL.
-    :param url: The Imgur page URL.
-    :return: The direct image URL.
-    """
-    return "https://i.imgur.com/" + url.split("https://imgur.com/")[-1]
-
-
-def _convert_to_new_format(image_bytestream: bytes | str, image_format: str) -> bytes | str | BytesIO:
-    """
-    Converts an image byte stream into a new format.
-    :param image_bytestream: The input image as a byte stream.
-    :param image_format: The desired format (e.g., 'png', 'jpg').
-    :return: A new byte stream containing the converted image.
-    """
-    new_image = BytesIO()
-    try:
-        Image.open(image_bytestream).save(new_image, format=image_format.upper())
-        new_image.name = f"cover.{image_format.lower()}"
-        new_image.seek(0)
-        return new_image
-    except Exception as e:
-        print_verbose(f"Encountered an error converting image to {image_format}\nError: {e}")
-        return image_bytestream
-
-
 # --- Image Handling Functions ---
 
 
-def handle_base64_image(
-    url: str, image_format: str, compress_images: bool, max_image_size: int
-) -> tuple[bytes, str, str]:
+def get_bytes_from_base64(url: str) -> tuple[bytes, str]:
     """
-    Handles Base64-encoded image data, optionally compressing or converting it.
+    Decodes a Base64-encoded image data URL.
     :param url: The Base64 image data URL.
-    :param image_format: The target image format (e.g., 'png').
-    :param compress_images: Whether to compress the image.
-    :param max_image_size: The maximum allowed image size in bytes.
-    :return: A tuple of (image data in bytes, image format, MIME type).
+    :return: A tuple of (decoded bytes, file extension).
     """
     head, base64data = url.split(",")
     file_ext = str(head.split(";")[0].split("/")[1])
     imgdata = b64decode(base64data)
-
-    if file_ext.lower() in ("gif", "webp", "svg"):
-        print_verbose("GIF/WEBP/SVG image detected, skipping compression")
-        return imgdata, file_ext, f"image/{file_ext}"
-
-    if file_ext.lower() not in SUPPORTED_FORMATS:
-        print_verbose(f"Image format {file_ext} not supported, converting to {image_format}")
-        converted = _convert_to_new_format(imgdata, image_format)
-        if isinstance(converted, BytesIO):
-            imgdata = converted.read()
-        elif isinstance(converted, bytes):
-            imgdata = converted
-        else:
-            # Handle str case - convert to bytes
-            imgdata = converted.encode() if isinstance(converted, str) else imgdata
-        return (
-            imgdata,
-            image_format.lower(),
-            f"image/{image_format.lower()}",
-        )
-
-    if compress_images:
-        compressed_image = compress_image(BytesIO(imgdata), max_image_size)
-        imgdata = PIL_Image_to_bytes(compressed_image, file_ext)
-
-    return imgdata, file_ext, f"image/{file_ext}"
+    return imgdata, file_ext
 
 
-def handle_image_data(
-    content: bytes, image_format: str, compress_images: bool, max_image_size: int
-) -> tuple[bytes, str, str]:
+def get_bytes_from_http(url: str) -> tuple[bytes, str]:
     """
-    Processes raw image content and optionally compresses or converts it.
-    :param content: The raw image content as bytes.
-    :param image_format: The target format for the image (e.g., 'png').
-    :param compress_images: Whether to compress the image.
-    :param max_image_size: The maximum allowed image size in bytes.
-    :return: A tuple of (image data in bytes, format, MIME type).
-    :raises ImageDecodeError: If the content cannot be decoded as an image.
+    Downloads image bytes from an HTTP URL.
+    :param url: The URL to download from.
+    :return: A tuple of (image bytes, MIME type from response headers).
+    :raises ImageFetchError: If the download fails.
     """
-    image = BytesIO(content)
-    image.seek(0)
+    if url.startswith("https://imgur.com/"):
+        url = "https://i.imgur.com/" + url.split("https://imgur.com/")[-1]
+
+    client_headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,\
+                     like Gecko) "
+        "Chrome/122.0.0.0 Safari/537.36"
+    }
 
     try:
-        PIL_image = Image.open(image)
+        with httpx.Client(headers=client_headers).stream("GET", url) as response:
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                print(f"HTTP error {response.status_code} downloading image: {url}")
+                print_verbose(f"Response content-type: {response.headers.get('content-type')}")
+                raise ImageFetchError(url, f"HTTP {response.status_code}") from e
+
+            mime_type = response.headers.get("content-type", "").split("/")[-1]
+            response.read()
+            return response.content, mime_type
+
+    except httpx.RequestError as e:
+        print(f"Network error downloading image from url: {url}")
+        print_verbose(f"Error: {e}")
+        raise ImageFetchError(url, "Network error") from e
+
+
+def process_image_bytes(
+    bytes_data: bytes,
+    detected_format: str,
+    target_format: str,
+    compress_images: bool,
+    max_image_size: int,
+) -> tuple[bytes, str, str]:
+    """
+    Processes image bytes: validates format, converts if needed, compresses if requested.
+    :param bytes_data: The raw image bytes.
+    :param detected_format: The detected format from the source (e.g., 'svg+xml', 'png').
+    :param target_format: The target format to convert to (e.g., 'webp').
+    :param compress_images: Whether to compress the image.
+    :param max_image_size: The maximum allowed image size in bytes.
+    :return: A tuple of (processed bytes, final format, MIME type).
+    :raises ImageDecodeError: If the bytes cannot be decoded as an image.
+    """
+    # Handle SVG (no PIL processing)
+    if detected_format == "svg+xml":
+        return bytes_data, "svg", "image/svg+xml"
+
+    # Try to decode with PIL to get the actual format
+    image_stream = BytesIO(bytes_data)
+    image_stream.seek(0)
+
+    try:
+        pil_image = Image.open(image_stream)
     except UnidentifiedImageError as e:
         print("Could not decode downloaded content as an image.")
         print_verbose(
@@ -157,22 +142,24 @@ def handle_image_data(
         )
         raise ImageDecodeError("unknown", str(e)) from e
 
-    img_format = str(PIL_image.format)
+    img_format = str(pil_image.format).lower()
 
-    if img_format.lower() in ("gif", "webp"):
+    # Animated formats: preserve as-is
+    if img_format in ("gif", "webp"):
         return (
-            PIL_Image_to_bytes(PIL_image, img_format),
+            PIL_Image_to_bytes(pil_image, img_format),
             img_format,
-            f"image/{img_format.lower()}",
+            f"image/{img_format}",
         )
 
+    # For non-animated images, apply compression if requested
     if compress_images:
-        PIL_image = compress_image(image, max_image_size)
+        pil_image = compress_image(image_stream, max_image_size)
 
     return (
-        PIL_Image_to_bytes(PIL_image, image_format),
-        image_format,
-        f"image/{image_format.lower()}",
+        PIL_Image_to_bytes(pil_image, target_format),
+        target_format,
+        f"image/{target_format}",
     )
 
 
@@ -192,38 +179,17 @@ def get_image_from_url(
     """
     if is_base64_image(url):
         print_verbose("Base64 image detected")
-        return handle_base64_image(url, image_format, compress_images, max_image_size)
+        imgdata, file_ext = get_bytes_from_base64(url)
 
-    if url.startswith("https://imgur.com/"):
-        url = transform_imgur_url(url)
+        # Return SVG as-is (no processing needed)
+        if file_ext.lower() == "svg":
+            return imgdata, "svg", "image/svg+xml"
 
-    client_headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,\
-                     like Gecko) "
-        "Chrome/122.0.0.0 Safari/537.36"
-    }
+        return process_image_bytes(imgdata, file_ext, image_format, compress_images, max_image_size)
 
-    try:
-        with httpx.Client(headers=client_headers).stream("GET", url) as response:
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as e:
-                print(f"HTTP error {response.status_code} downloading image: {url}")
-                print_verbose(f"Response content-type: {response.headers.get('content-type')}")
-                raise ImageFetchError(url, f"HTTP {response.status_code}") from e
+    bytes_data, detected_format = get_bytes_from_http(url)
 
-            mime_type = response.headers.get("content-type", "").split("/")[-1]
-            if mime_type == "svg+xml":
-                response.read()
-                return response.content, "svg", "image/svg+xml"
-
-            response.read()
-            return handle_image_data(response.content, image_format, compress_images, max_image_size)
-
-    except httpx.RequestError as e:
-        print(f"Network error downloading image from url: {url}")
-        print_verbose(f"Error: {e}")
-        raise ImageFetchError(url, "Network error") from e
+    return process_image_bytes(bytes_data, detected_format, image_format, compress_images, max_image_size)
 
 
 # --- Image Compression Functions ---
