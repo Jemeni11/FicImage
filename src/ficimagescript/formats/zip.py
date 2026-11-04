@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from ficimagescript.config import state
 from ficimagescript.exceptions import ImageDecodeError, ImageFetchError, ImageFormatError
-from ficimagescript.image import get_image_from_url
+from ficimagescript.formats.helpers import try_get_image
 from ficimagescript.utils.logging import print_image_summary, print_verbose
 
 FICHUB_ATTR = b"Exported with the assistance of FicHub.net"
@@ -39,14 +39,14 @@ def extract_html_from_zip(input_zip_path: str) -> dict:
     return html_files
 
 
-def modify_html(content: bytes, images_dir: str, embed_images: bool) -> tuple[bytes, int, int]:
+def modify_html(content: bytes, images_dir: str, embed_images: bool, file_name: str = "") -> tuple[bytes, int, int]:
     """
     Modify the HTML content to replace image placeholders with downloaded images.
 
     :param content: The original HTML content.
     :param images_dir: Directory to store downloaded images.
     :param embed_images: If True, save the images directly in the HTML file as base64 images.
-    :param verbose: If True, enables verbose output.
+    :param file_name: Optional file name for logging context.
     :return: tuple of (modified_html_bytes, images_downloaded_count, total_images_found)
     """
     soup = BeautifulSoup(content, "lxml")
@@ -59,25 +59,11 @@ def modify_html(content: bytes, images_dir: str, embed_images: bool) -> tuple[by
     print_verbose(f"Found {total_images} image{'' if total_images == 1 else 's'}")
 
     for index, image in enumerate(images, start=1):
-        if image is None:
-            print("NoneType, Skipping")
-            continue
-
         try:
-            if not hasattr(image, "a") or image.a is None:
-                print(f"Skipping image {index}: no link found")
+            result = try_get_image(image, index, total_images, file_name)
+
+            if result is None:
                 continue
-
-            image_link = str(image.a["href"])
-            print(f"Processing image {index}: {image_link}")
-
-            # Download and process the image
-            result = get_image_from_url(
-                image_link,
-                state.get("default_image_format", "WEBP"),
-                state.get("compress_images", True),
-                state.get("max_image_size", 100_000),
-            )
 
             image_content, image_extension, image_media_type = result
             downloaded_count += 1
@@ -175,7 +161,7 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
         if zip_embed_images:
             modified_files = {}
             for file_name, content in html_files.items():
-                modified_content, downloaded, total = modify_html(content, "", zip_embed_images)
+                modified_content, downloaded, total = modify_html(content, "", zip_embed_images, file_name)
                 modified_files[file_name] = modified_content
                 images_downloaded[file_name] = [downloaded, total]
 
@@ -190,7 +176,7 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
             modified_files = {}
 
             for fn, content in html_files.items():
-                modified_content, downloaded, total = modify_html(content, images_dir, False)
+                modified_content, downloaded, total = modify_html(content, images_dir, False, fn)
                 modified_files[fn] = modified_content
                 images_downloaded[fn] = [downloaded, total]
 

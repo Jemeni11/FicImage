@@ -4,9 +4,8 @@ from bs4 import BeautifulSoup
 from ebooklib import ITEM_DOCUMENT
 from ebooklib.epub import EpubItem, read_epub, write_epub
 
-from ficimagescript.config import state
 from ficimagescript.exceptions import ImageDecodeError, ImageFetchError, ImageFormatError
-from ficimagescript.image import get_image_from_url
+from ficimagescript.formats.helpers import try_get_image
 from ficimagescript.utils.logging import print_image_summary, print_verbose
 
 
@@ -45,10 +44,6 @@ def update_epub(path_to_epub: str):
             print("This is not a FicHub epub")
             return
 
-        compress_images_config: bool = state.get("compress_images", True)
-        default_image_format_config: str = state.get("default_image_format", "WEBP")
-        max_image_size_config: int = state.get("max_image_size", 100_000)
-
         file_name = Path(path_to_epub).stem
 
         images_downloaded = {}
@@ -71,37 +66,30 @@ def update_epub(path_to_epub: str):
 
                 for index, image in enumerate(images, start=1):
                     try:
-                        if image is None:
-                            print("NoneType, Skipping")
-                        else:
-                            image_link = f"{image.a['href']}"  # ty:ignore[not-subscriptable]
-                            print(f"[{item_file_name}] Image {index} (out of {len(images)}). Source: {image_link}")
-                            result = get_image_from_url(
-                                url=image_link,
-                                image_format=default_image_format_config,
-                                compress_images=compress_images_config,
-                                max_image_size=max_image_size_config,
-                            )
+                        result = try_get_image(image, index, len(images), item_file_name)
 
-                            image_content, image_extension, image_media_type = result
+                        if result is None:
+                            continue
 
-                            images_downloaded[item.file_name][0] += 1
+                        image_content, image_extension, image_media_type = result
 
-                            image_path = f"images/{item_file_name}_image_{index}.{image_extension.lower()}"
-                            new_image = (
-                                f"<img alt='Image {index} from {item.file_name}' "
-                                f"style='text-align: center; margin: 2em auto; display: block; max-width: 100%;'"
-                                f" src='{image_path}' />"
-                            )
+                        images_downloaded[item.file_name][0] += 1
 
-                            img = EpubItem(
-                                uid=f"{item_file_name}_{index}",
-                                file_name=image_path,
-                                media_type=image_media_type,
-                                content=image_content,
-                            )
-                            book.add_item(img)
-                            image.replace_with(BeautifulSoup(new_image, "lxml-xml"))
+                        image_path = f"images/{item_file_name}_image_{index}.{image_extension.lower()}"
+                        new_image = (
+                            f"<img alt='Image {index} from {item.file_name}' "
+                            f"style='text-align: center; margin: 2em auto; display: block; max-width: 100%;'"
+                            f" src='{image_path}' />"
+                        )
+
+                        img = EpubItem(
+                            uid=f"{item_file_name}_{index}",
+                            file_name=image_path,
+                            media_type=image_media_type,
+                            content=image_content,
+                        )
+                        book.add_item(img)
+                        image.replace_with(BeautifulSoup(new_image, "lxml-xml"))
                     except ImageFetchError as e:
                         print(f"Skipping image {index}: failed to fetch ({e.reason})")
                     except ImageDecodeError as e:
