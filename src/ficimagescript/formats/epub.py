@@ -5,6 +5,7 @@ from ebooklib import ITEM_DOCUMENT
 from ebooklib.epub import EpubItem, read_epub, write_epub
 
 from ficimagescript.config import state
+from ficimagescript.exceptions import ImageDecodeError, ImageFetchError, ImageFormatError
 from ficimagescript.image import get_image_from_url
 from ficimagescript.utils.logging import print_image_summary, print_verbose
 
@@ -74,21 +75,13 @@ def update_epub(path_to_epub: str):
                             print("NoneType, Skipping")
                         else:
                             image_link = f"{image.a['href']}"  # ty:ignore[not-subscriptable]
-                            print(
-                                f"[{item_file_name}] Image {index} (out of {len(images)}). Source: {image_link}"
-                            )
+                            print(f"[{item_file_name}] Image {index} (out of {len(images)}). Source: {image_link}")
                             result = get_image_from_url(
                                 url=image_link,
                                 image_format=default_image_format_config,
                                 compress_images=compress_images_config,
                                 max_image_size=max_image_size_config,
                             )
-
-                            if result is None:
-                                print(
-                                    f"Error with image {index}: failed to download, skipping ..."
-                                )
-                                continue
 
                             image_content, image_extension, image_media_type = result
 
@@ -109,16 +102,20 @@ def update_epub(path_to_epub: str):
                             )
                             book.add_item(img)
                             image.replace_with(BeautifulSoup(new_image, "lxml-xml"))
-                    except Exception as err:
-                        print(f"Error with image {index}: {err}, skipping ...")
+                    except ImageFetchError as e:
+                        print(f"Skipping image {index}: failed to fetch ({e.reason})")
+                    except ImageDecodeError as e:
+                        print(f"Skipping image {index}: failed to decode ({e.reason})")
+                    except ImageFormatError as e:
+                        print(f"Skipping image {index}: unsupported format ({e.format_name})")
+                    except Exception as e:
+                        print(f"Error with image {index}: {e}, skipping ...")
                 item.content = str(soup).encode("utf-8")
             except Exception as error:
                 print(f"Error while parsing images: {error}")
 
         try:
-            total_number_of_images_downloaded = sum(
-                v[0] for v in images_downloaded.values()
-            )
+            total_number_of_images_downloaded = sum(v[0] for v in images_downloaded.values())
 
             if total_number_of_images_downloaded > 0:
                 try:
@@ -127,9 +124,7 @@ def update_epub(path_to_epub: str):
                     print_verbose(f"Saving in directory: {epub_dir} ")
                     write_epub(new_filename, book)
                 except Exception as e:
-                    print_verbose(
-                        f"Error: {e}\n Trying to save in the current working directory instead"
-                    )
+                    print_verbose(f"Error: {e}\n Trying to save in the current working directory instead")
                     write_epub(f"[FicImage]{file_name}.epub", book)
 
                 print(f"\nWrote [FicImage]{file_name}.epub")

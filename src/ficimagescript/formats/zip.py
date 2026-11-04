@@ -6,6 +6,7 @@ from pathlib import Path, PurePosixPath
 from bs4 import BeautifulSoup
 
 from ficimagescript.config import state
+from ficimagescript.exceptions import ImageDecodeError, ImageFetchError, ImageFormatError
 from ficimagescript.image import get_image_from_url
 from ficimagescript.utils.logging import print_image_summary, print_verbose
 
@@ -38,9 +39,7 @@ def extract_html_from_zip(input_zip_path: str) -> dict:
     return html_files
 
 
-def modify_html(
-    content: bytes, images_dir: str, embed_images: bool
-) -> tuple[bytes, int, int]:
+def modify_html(content: bytes, images_dir: str, embed_images: bool) -> tuple[bytes, int, int]:
     """
     Modify the HTML content to replace image placeholders with downloaded images.
 
@@ -80,10 +79,6 @@ def modify_html(
                 state.get("max_image_size", 100_000),
             )
 
-            if result is None:
-                print(f"Skipping image {index}: failed to download")
-                continue
-
             image_content, image_extension, image_media_type = result
             downloaded_count += 1
 
@@ -116,6 +111,12 @@ def modify_html(
 
             image.replace_with(BeautifulSoup(new_image, "lxml"))
 
+        except ImageFetchError as e:
+            print(f"Skipping image {index}: failed to fetch ({e.reason})")
+        except ImageDecodeError as e:
+            print(f"Skipping image {index}: failed to decode ({e.reason})")
+        except ImageFormatError as e:
+            print(f"Skipping image {index}: unsupported format ({e.format_name})")
         except Exception as e:
             print(f"Error processing image {index}: {e}, skipping ...")
 
@@ -160,9 +161,7 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
     """
 
     if not has_fichub_attribution(input_zip_path):
-        print(
-            "This is not a FicHub Zipped HTML File (Did you unpack a FicHub epub and pass it in?)"
-        )
+        print("This is not a FicHub Zipped HTML File (Did you unpack a FicHub epub and pass it in?)")
         return
 
     zip_base_name = Path(Path(input_zip_path).name).stem
@@ -176,9 +175,7 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
         if zip_embed_images:
             modified_files = {}
             for file_name, content in html_files.items():
-                modified_content, downloaded, total = modify_html(
-                    content, "", zip_embed_images
-                )
+                modified_content, downloaded, total = modify_html(content, "", zip_embed_images)
                 modified_files[file_name] = modified_content
                 images_downloaded[file_name] = [downloaded, total]
 
@@ -193,9 +190,7 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
             modified_files = {}
 
             for fn, content in html_files.items():
-                modified_content, downloaded, total = modify_html(
-                    content, images_dir, False
-                )
+                modified_content, downloaded, total = modify_html(content, images_dir, False)
                 modified_files[fn] = modified_content
                 images_downloaded[fn] = [downloaded, total]
 

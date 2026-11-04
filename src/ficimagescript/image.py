@@ -5,6 +5,7 @@ from io import BytesIO
 import httpx
 from PIL import Image, UnidentifiedImageError
 
+from .exceptions import ImageDecodeError, ImageFetchError
 from .utils.logging import print_verbose
 
 SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "gif", "webp", "svg"}
@@ -61,9 +62,7 @@ def transform_imgur_url(url: str) -> str:
     return "https://i.imgur.com/" + url.split("https://imgur.com/")[-1]
 
 
-def _convert_to_new_format(
-    image_bytestream: bytes | str, image_format: str
-) -> bytes | str | BytesIO:
+def _convert_to_new_format(image_bytestream: bytes | str, image_format: str) -> bytes | str | BytesIO:
     """
     Converts an image byte stream into a new format.
     :param image_bytestream: The input image as a byte stream.
@@ -77,9 +76,7 @@ def _convert_to_new_format(
         new_image.seek(0)
         return new_image
     except Exception as e:
-        print_verbose(
-            f"Encountered an error converting image to {image_format}\nError: {e}"
-        )
+        print_verbose(f"Encountered an error converting image to {image_format}\nError: {e}")
         return image_bytestream
 
 
@@ -106,9 +103,7 @@ def handle_base64_image(
         return imgdata, file_ext, f"image/{file_ext}"
 
     if file_ext.lower() not in SUPPORTED_FORMATS:
-        print_verbose(
-            f"Image format {file_ext} not supported, converting to {image_format}"
-        )
+        print_verbose(f"Image format {file_ext} not supported, converting to {image_format}")
         converted = _convert_to_new_format(imgdata, image_format)
         if isinstance(converted, BytesIO):
             imgdata = converted.read()
@@ -132,7 +127,7 @@ def handle_base64_image(
 
 def handle_image_data(
     content: bytes, image_format: str, compress_images: bool, max_image_size: int
-) -> tuple[bytes, str, str] | None:
+) -> tuple[bytes, str, str]:
     """
     Processes raw image content and optionally compresses or converts it.
     :param content: The raw image content as bytes.
@@ -140,13 +135,14 @@ def handle_image_data(
     :param compress_images: Whether to compress the image.
     :param max_image_size: The maximum allowed image size in bytes.
     :return: A tuple of (image data in bytes, format, MIME type).
+    :raises ImageDecodeError: If the content cannot be decoded as an image.
     """
     image = BytesIO(content)
     image.seek(0)
 
     try:
         PIL_image = Image.open(image)
-    except UnidentifiedImageError:
+    except UnidentifiedImageError as e:
         print("Could not decode downloaded content as an image.")
         print_verbose(
             "This can happen if the URL returns an error page (e.g. 404 HTML), "
@@ -159,7 +155,7 @@ def handle_image_data(
             " or if you don't have a GitHub, you can use this Tally Form "
             "(https://tally.so/r/7Rjpgz?project=FicImage)"
         )
-        return None
+        raise ImageDecodeError("unknown", str(e)) from e
 
     img_format = str(PIL_image.format)
 
@@ -182,7 +178,7 @@ def handle_image_data(
 
 def get_image_from_url(
     url: str, image_format: str, compress_images: bool, max_image_size: int
-) -> None | tuple[bytes, str, str]:
+) -> tuple[bytes, str, str]:
     """
     Downloads and processes an image from a URL.
     :param url: The URL of the image.
@@ -190,32 +186,31 @@ def get_image_from_url(
     :param compress_images: Whether to compress the image.
     :param max_image_size: The maximum allowed image size in bytes.
     :return: A tuple of (image data in bytes, format, MIME type).
+    :raises ImageFetchError: If the image cannot be fetched (network/HTTP errors).
+    :raises ImageDecodeError: If the downloaded content cannot be decoded as an image.
+    :raises ImageFormatError: If the image format is not supported.
     """
-    try:
-        if is_base64_image(url):
-            print_verbose("Base64 image detected")
-            return handle_base64_image(
-                url, image_format, compress_images, max_image_size
-            )
+    if is_base64_image(url):
+        print_verbose("Base64 image detected")
+        return handle_base64_image(url, image_format, compress_images, max_image_size)
 
-        if url.startswith("https://imgur.com/"):
-            url = transform_imgur_url(url)
+    if url.startswith("https://imgur.com/"):
+        url = transform_imgur_url(url)
 
-        client_headers = {
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,\
+    client_headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,\
                      like Gecko) "
-            "Chrome/122.0.0.0 Safari/537.36"
-        }
+        "Chrome/122.0.0.0 Safari/537.36"
+    }
 
+    try:
         with httpx.Client(headers=client_headers).stream("GET", url) as response:
             try:
                 response.raise_for_status()
-            except httpx.HTTPStatusError:
+            except httpx.HTTPStatusError as e:
                 print(f"HTTP error {response.status_code} downloading image: {url}")
-                print_verbose(
-                    f"Response content-type: {response.headers.get('content-type')}"
-                )
-                return None
+                print_verbose(f"Response content-type: {response.headers.get('content-type')}")
+                raise ImageFetchError(url, f"HTTP {response.status_code}") from e
 
             mime_type = response.headers.get("content-type", "").split("/")[-1]
             if mime_type == "svg+xml":
@@ -223,17 +218,12 @@ def get_image_from_url(
                 return response.content, "svg", "image/svg+xml"
 
             response.read()
-            return handle_image_data(
-                response.content, image_format, compress_images, max_image_size
-            )
+            return handle_image_data(response.content, image_format, compress_images, max_image_size)
 
     except httpx.RequestError as e:
         print(f"Network error downloading image from url: {url}")
         print_verbose(f"Error: {e}")
-
-    except Exception as e:
-        print(f"Encountered an error downloading image from url: {url}")
-        print_verbose(f"Error: {e}")
+        raise ImageFetchError(url, "Network error") from e
 
 
 # --- Image Compression Functions ---
@@ -272,9 +262,7 @@ def compress_image(image: BytesIO, max_size: int) -> Image.Image:
 
     original_size = len(image.getvalue())
     print_verbose(f"Original image size: {get_size_format(original_size)}")
-    print_verbose(
-        f"Image mode: {original_image.mode}, bytes per pixel: {bytes_per_pixel}"
-    )
+    print_verbose(f"Image mode: {original_image.mode}, bytes per pixel: {bytes_per_pixel}")
 
     if original_size <= max_size:
         print_verbose(
@@ -297,13 +285,9 @@ def compress_image(image: BytesIO, max_size: int) -> Image.Image:
     # Resize the image
     new_width = int(original_image.size[0] * scale_factor)
     new_height = int(original_image.size[1] * scale_factor)
-    print_verbose(
-        f"Resizing image from {original_image.size} to ({new_width}, {new_height})..."
-    )
+    print_verbose(f"Resizing image from {original_image.size} to ({new_width}, {new_height})...")
 
-    compressed_image = original_image.resize(
-        (new_width, new_height), resample=Image.Resampling.LANCZOS
-    )
+    compressed_image = original_image.resize((new_width, new_height), resample=Image.Resampling.LANCZOS)
 
     # Optional: Double-check the compressed size
     with BytesIO() as temp_output:
@@ -348,9 +332,7 @@ def PIL_Image_to_bytes(pil_image: Image.Image, image_format: str) -> bytes:
 
     if image_format.lower() in ["jpeg", "jpg"]:
         background_img = Image.new("RGBA", pil_image.size, "white")
-        background_img.paste(
-            pil_image.convert("RGBA"), (0, 0), pil_image.convert("RGBA")
-        )
+        background_img.paste(pil_image.convert("RGBA"), (0, 0), pil_image.convert("RGBA"))
         pil_image = background_img.convert("RGB")
 
     pil_image.save(out_io, format=image_format, optimize=True, quality=95)
