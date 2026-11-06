@@ -1,8 +1,7 @@
-import os
 import sys
 from pathlib import Path
 
-from .logging import print_verbose_exception
+from ficimagescript.utils.logging import print_verbose_exception
 
 
 def identify_file_type(file_path: str) -> str:
@@ -37,7 +36,7 @@ def identify_file_type(file_path: str) -> str:
         return "unknown"
 
 
-def file_search(current_directory: str) -> list:
+def file_search(current_directory: str) -> list[Path]:
     """
     Search for files with specific extensions in a directory and its subdirectories.
 
@@ -45,18 +44,16 @@ def file_search(current_directory: str) -> list:
     :return: A list of file paths matching the specified extensions.
     """
     # Supported file extensions
-    supported_extensions = (".epub", ".zip", ".pdf", ".mobi")
+    supported_extensions = {".epub", ".zip"}
     files_path_list = []
 
-    # Walk through the directory tree
-    for dir_path, _dir_names, files in os.walk(current_directory):
-        for file in files:
-            if file.lower().endswith(supported_extensions):
-                file_path = Path(dir_path) / file
-                files_path_list.append(file_path)
+    # Use pathlib to search recursively
+    for file_path in Path(current_directory).rglob("*"):
+        if file_path.suffix.lower() in supported_extensions:
+            files_path_list.append(file_path)
 
     if len(files_path_list) == 0:
-        sys.exit("No supported files (.epub, .zip, .pdf, .mobi) found!")
+        sys.exit("No supported files (.epub or .zip) found!")
 
     print(f"Found {len(files_path_list)} files in total!")
     return files_path_list

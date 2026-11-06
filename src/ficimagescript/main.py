@@ -2,11 +2,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from .config import config_check, load_config_json, state, validate_format
-from .formats import update_epub, update_zip
-from .utils.files import file_search, identify_file_type
-from .utils.logging import print_verbose, print_verbose_exception
-from .utils.update import check_for_update, show_credits
+from ficimagescript.config import config_check, load_config_json, state, validate_format
+from ficimagescript.formats import update_epub, update_zip
+from ficimagescript.utils.files import file_search, identify_file_type
+from ficimagescript.utils.logging import print_verbose, print_verbose_exception
+from ficimagescript.utils.update import check_for_update, show_credits
 
 
 def initialize_state(config_file_path: Path | None = None) -> None:
@@ -128,7 +128,7 @@ def main() -> None:
         list_of_files = file_search(recursive)
         for i in list_of_files:
             try:
-                update_file(i)
+                update_file(str(i))
             except Exception as e:
                 print(f"Error! Skipping {i}")
                 print_verbose(f"Exception: {e}")

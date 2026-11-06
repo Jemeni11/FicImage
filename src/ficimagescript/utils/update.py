@@ -1,7 +1,7 @@
 import httpx
 from packaging.version import parse
 
-from .logging import print_verbose_exception
+from ficimagescript.utils.logging import print_verbose_exception
 
 
 def check_for_update(current_version: str):

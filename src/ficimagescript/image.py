@@ -5,8 +5,8 @@ from io import BytesIO
 import httpx
 from PIL import Image, UnidentifiedImageError
 
-from .exceptions import ImageDecodeError, ImageFetchError
-from .utils.logging import print_verbose
+from ficimagescript.exceptions import ImageDecodeError, ImageFetchError
+from ficimagescript.utils.logging import print_verbose
 
 SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "gif", "webp", "svg"}
 
