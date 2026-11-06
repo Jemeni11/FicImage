@@ -1,6 +1,8 @@
 import httpx
 from packaging.version import parse
 
+from .logging import print_verbose_exception
+
 
 def check_for_update(current_version: str):
     """Checks if a new version of FicImage is available on PyPI."""
@@ -20,6 +22,7 @@ def check_for_update(current_version: str):
 
     except httpx.RequestError as e:
         print(f"Unable to check for updates: {e}")
+        print_verbose_exception(e)
 
 
 def show_credits():

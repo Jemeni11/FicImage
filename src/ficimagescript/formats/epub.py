@@ -6,7 +6,7 @@ from ebooklib.epub import EpubItem, read_epub, write_epub
 
 from ficimagescript.exceptions import ImageDecodeError, ImageFetchError, ImageFormatError
 from ficimagescript.formats.helpers import try_get_image
-from ficimagescript.utils.logging import print_image_summary, print_verbose
+from ficimagescript.utils.logging import print_image_summary, print_verbose, print_verbose_exception
 
 
 def has_fichub_attribution_epub(epub_path: str) -> bool:
@@ -31,6 +31,7 @@ def has_fichub_attribution_epub(epub_path: str) -> bool:
     except Exception as e:
         print("Error! Could not confirm if this is a FicHub epub. Skipping")
         print_verbose(f"Error checking FicHub attribution: {e}")
+        print_verbose_exception(e)
         return False
 
 
@@ -92,15 +93,20 @@ def update_epub(path_to_epub: str):
                         image.replace_with(BeautifulSoup(new_image, "lxml-xml"))
                     except ImageFetchError as e:
                         print(f"Skipping image {index}: failed to fetch ({e.reason})")
+                        print_verbose_exception(e)
                     except ImageDecodeError as e:
                         print(f"Skipping image {index}: failed to decode ({e.reason})")
+                        print_verbose_exception(e)
                     except ImageFormatError as e:
                         print(f"Skipping image {index}: unsupported format ({e.format_name})")
+                        print_verbose_exception(e)
                     except Exception as e:
                         print(f"Error with image {index}: {e}, skipping ...")
+                        print_verbose_exception(e)
                 item.content = str(soup).encode("utf-8")
             except Exception as error:
                 print(f"Error while parsing images: {error}")
+                print_verbose_exception(error)
 
         try:
             total_number_of_images_downloaded = sum(v[0] for v in images_downloaded.values())
@@ -113,6 +119,7 @@ def update_epub(path_to_epub: str):
                     write_epub(new_filename, book)
                 except Exception as e:
                     print_verbose(f"Error: {e}\n Trying to save in the current working directory instead")
+                    print_verbose_exception(e)
                     write_epub(f"[FicImage]{file_name}.epub", book)
 
                 print(f"\nWrote [FicImage]{file_name}.epub")
@@ -121,10 +128,12 @@ def update_epub(path_to_epub: str):
                 print("No images successfully downloaded. No new epub was created")
         except Exception as e:
             print(f"Error while writing epub: {e}")
+            print_verbose_exception(e)
             return
 
     except FileNotFoundError:
         print(f"File {path_to_epub} not found.")
         return
-    except TypeError:
+    except TypeError as e:
         print("NoneType error, skipping ...")
+        print_verbose_exception(e)

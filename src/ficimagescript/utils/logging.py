@@ -1,3 +1,5 @@
+import traceback
+
 from ficimagescript.config import state
 
 
@@ -7,9 +9,20 @@ def print_verbose(message: str):
         print(f"[VERBOSE] {message}")
 
 
-def print_image_summary(
-    base_name: str, images_downloaded: dict[str, list[int]]
-) -> None:
+def print_verbose_exception(error: BaseException) -> None:
+    """
+    Prints the full traceback for an exception when verbose mode is enabled.
+
+    Chained exceptions (``raise ... from``) are included, so the underlying
+    library error is not lost when a batch step skips an item.
+
+    :param error: The exception to print.
+    """
+    if state.get("verbose", False):
+        print("".join(traceback.format_exception(error)), end="")
+
+
+def print_image_summary(base_name: str, images_downloaded: dict[str, list[int]]) -> None:
     """
     Print a summary table of images downloaded per file.
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from .config import config_check, load_config_json, state, validate_format
 from .formats import update_epub, update_zip
 from .utils.files import file_search, identify_file_type
+from .utils.logging import print_verbose, print_verbose_exception
 from .utils.update import check_for_update, show_credits
 
 
@@ -24,18 +25,10 @@ def initialize_state(config_file_path: Path | None = None) -> None:
         ficimage_config = load_config_json(config_file_location)
 
         # Update state with values from the config file
-        state["compress_images"] = ficimage_config.get(
-            "compress_images", state["compress_images"]
-        )
-        state["default_image_format"] = ficimage_config.get(
-            "default_image_format", state["default_image_format"]
-        )
-        state["max_image_size"] = ficimage_config.get(
-            "max_image_size", state["max_image_size"]
-        )
-        state["zip_embed_images"] = ficimage_config.get(
-            "zip_embed_images", state["zip_embed_images"]
-        )
+        state["compress_images"] = ficimage_config.get("compress_images", state["compress_images"])
+        state["default_image_format"] = ficimage_config.get("default_image_format", state["default_image_format"])
+        state["max_image_size"] = ficimage_config.get("max_image_size", state["max_image_size"])
+        state["zip_embed_images"] = ficimage_config.get("zip_embed_images", state["zip_embed_images"])
 
     try:
         state["default_image_format"] = validate_format(state["default_image_format"])
@@ -80,12 +73,8 @@ def main() -> None:
                 Send Feedback: https://tally.so/r/7Rjpgz?project=FicImage",
     )
     parser.add_argument("-p", "--path", help="The path to the FicHub file.")
-    parser.add_argument(
-        "-c", "--config_file_path", help="The path to the ficimage.json file."
-    )
-    parser.add_argument(
-        "-V", "--verbose", help="Enable verbose output", action="store_true"
-    )
+    parser.add_argument("-c", "--config_file_path", help="The path to the ficimage.json file.")
+    parser.add_argument("-V", "--verbose", help="Enable verbose output", action="store_true")
     parser.add_argument(
         "-v",
         "--version",
@@ -104,9 +93,7 @@ def main() -> None:
         help="Check if a new version is available.",
         action="store_true",
     )
-    parser.add_argument(
-        "--credits", help="Show credits and support information", action="store_true"
-    )
+    parser.add_argument("--credits", help="Show credits and support information", action="store_true")
     args = parser.parse_args()
 
     file_path = args.path
@@ -144,8 +131,8 @@ def main() -> None:
                 update_file(i)
             except Exception as e:
                 print(f"Error! Skipping {i}")
-                if state.get("verbose", False):
-                    print(f"Exception: {e}")
+                print_verbose(f"Exception: {e}")
+                print_verbose_exception(e)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from ficimagescript.config import state
 from ficimagescript.exceptions import ImageDecodeError, ImageFetchError, ImageFormatError
 from ficimagescript.formats.helpers import try_get_image
-from ficimagescript.utils.logging import print_image_summary, print_verbose
+from ficimagescript.utils.logging import print_image_summary, print_verbose, print_verbose_exception
 
 FICHUB_ATTR = b"Exported with the assistance of FicHub.net"
 FICHUB_DOMAIN = b"FicHub.net"
@@ -99,12 +99,16 @@ def modify_html(content: bytes, images_dir: str, embed_images: bool, file_name: 
 
         except ImageFetchError as e:
             print(f"Skipping image {index}: failed to fetch ({e.reason})")
+            print_verbose_exception(e)
         except ImageDecodeError as e:
             print(f"Skipping image {index}: failed to decode ({e.reason})")
+            print_verbose_exception(e)
         except ImageFormatError as e:
             print(f"Skipping image {index}: unsupported format ({e.format_name})")
+            print_verbose_exception(e)
         except Exception as e:
             print(f"Error processing image {index}: {e}, skipping ...")
+            print_verbose_exception(e)
 
     return str(soup).encode("utf-8"), downloaded_count, total_images
 
@@ -204,6 +208,7 @@ def process_zip(input_zip_path: str, zip_embed_images: bool = False):
 
     except Exception as e:
         print(f"Error: {e}")
+        print_verbose_exception(e)
 
 
 def update_zip(file_path: str):

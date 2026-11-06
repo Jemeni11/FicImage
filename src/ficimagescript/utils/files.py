@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 
+from .logging import print_verbose_exception
+
 
 def identify_file_type(file_path: str) -> str:
     """
@@ -31,6 +33,7 @@ def identify_file_type(file_path: str) -> str:
         return "unknown"
     except Exception as e:
         print(f"Error reading file: {e}")
+        print_verbose_exception(e)
         return "unknown"
 
 

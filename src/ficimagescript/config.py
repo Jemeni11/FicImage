@@ -1,5 +1,4 @@
 import json
-import sys
 from pathlib import Path
 from typing import Literal, TypedDict, TypeGuard
 
@@ -37,9 +36,7 @@ def validate_format(format_str: str) -> ImageFormat:
     normalized = format_str.lower()
     if is_valid_format(normalized):
         return normalized
-    raise ValueError(
-        f"Invalid format '{format_str}'. Must be one of: {', '.join(VALID_FORMATS)}"
-    )
+    raise ValueError(f"Invalid format '{format_str}'. Must be one of: {', '.join(VALID_FORMATS)}")
 
 
 def config_check(directory_path: Path | None = None) -> tuple[bool, Path]:
@@ -54,9 +51,7 @@ def config_check(directory_path: Path | None = None) -> tuple[bool, Path]:
     """
     if directory_path is None:
         current_dir = Path.cwd()
-        print(
-            f"[Config File Check]: No directory was passed, checking current directory '{current_dir}'"
-        )
+        print(f"[Config File Check]: No directory was passed, checking current directory '{current_dir}'")
 
         file_path = Path(current_dir) / "ficimage.json"
 
@@ -65,9 +60,7 @@ def config_check(directory_path: Path | None = None) -> tuple[bool, Path]:
             return True, current_dir
 
         directory_path = Path.home()
-        print(
-            f"[Config File Check]: ficimage.json not found in current directory, checking '{directory_path}'"
-        )
+        print(f"[Config File Check]: ficimage.json not found in current directory, checking '{directory_path}'")
 
     file_path = Path(directory_path) / "ficimage.json"
 
@@ -82,7 +75,7 @@ def config_check(directory_path: Path | None = None) -> tuple[bool, Path]:
 
 def load_config_json(ficimage_path: Path) -> dict:
     """
-    Loads ficimage.json. Calls `sys.exit` if there's a JSONDecodeError.
+    Loads ficimage.json. Raises `SystemExit` if the file is missing or invalid.
     :param ficimage_path: The path to ficimage.json.
     :return: A dict containing the data stored inside ficimage.json
     """
@@ -91,9 +84,9 @@ def load_config_json(ficimage_path: Path) -> dict:
     try:
         with full_path.open("r") as f:
             return json.load(f)
-    except FileNotFoundError:
-        sys.exit(
+    except FileNotFoundError as e:
+        raise SystemExit(
             f"[Loading Config JSON]: File not found. Are you sure there's a ficimage.json file in {ficimage_path}"
-        )
-    except json.decoder.JSONDecodeError:
-        sys.exit("[Loading Config JSON]: Invalid JSON in Config File")
+        ) from e
+    except json.decoder.JSONDecodeError as e:
+        raise SystemExit("[Loading Config JSON]: Invalid JSON in Config File") from e
