@@ -3,7 +3,7 @@ import traceback
 from ficimagescript.config import state
 
 
-def print_verbose(message: str):
+def print_verbose(message: str) -> None:
     """Prints messages only if verbose mode is enabled."""
     if state.get("verbose", False):
         print(f"[VERBOSE] {message}")
