@@ -1,187 +1,386 @@
 FicImage (aka FicImageScript)
 =============================
 
-FicImage is an application designed to enhance the reading experience of
-FicHub epubs. With FicImage, users can easily add missing images to
-their FicHub epubs, bringing the stories to life with vibrant visuals.
-This user-friendly tool allows readers to fully immerse themselves in
-their favorite fan fiction stories and enjoy them in a whole new way.
+.. image:: /logo.png
+   :alt: Logo
+   :width: 128
+   :height: 128
+   :align: center
 
-How to Use
-----------
+Enhance your FicHub files with images.
 
-Installation with PIP
-~~~~~~~~~~~~~~~~~~~~~
+Explore the repo: https://github.com/Jemeni11/FicImage
 
-1. Install FicImage using ``pip install FicImageScript``.
-2. After installation, run the program using
-   ``ficimage -p path/to/epub -c path/to/ficimage/json`` where
-   ``path/to/epub`` is the path to the **FicHub epub** you want to add
-   images to and ``path/to/ficimage/json`` is the path to a file called
-   **ficimage.json** . ficimage.json lets you configure FicImage. See
-   more `in the configuration section below <#configuration>`__.
+.. contents:: Table of Contents
+   :depth: 1
+   :backlinks: top
+
+Introduction
+------------
+
+|PyPI Downloads|
+
+FicImage (aka FicImageScript due to naming issues on PyPI) is a tool for
+inserting missing images into FicHub files.
+
+It scans the file for image placeholders, downloads the images, and
+replaces the placeholders with the actual images.
+
+.. note::
+
+   Only supports EPUB and zipped HTML. PDF/MOBI support is not planned
+   (see `Why no PDF/MOBI support?`_).
+
+Features
+--------
+
+- Scans FicHub files for image placeholders and replaces them with actual images
+- Supports batch processing with the ``--recursive`` flag
+- Handles image downloading and basic processing using Pillow
+- Supports JPEG, PNG, GIF, WEBP, and SVG (within EPUB 3.3 spec limits)
+- Optional image compression for JPEG, PNG and non-animated WEBP
+- Customizable via ``ficimage.json`` config file (supports image format,
+  compression, max size, zipped html handling)
+- Verbose mode for troubleshooting
+- Leaves placeholders untouched if an image can't be downloaded
+- Avoids breaking animated images (minimal processing on GIFs/WEBPs)
+
+Installation
+------------
+
+From PyPI (Recommended)
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: shell
 
-   (virt) nonso@HPEnvy:~/Documents/Code$ ficimage -h
-    usage: main.py [-h] [-p PATH_TO_EPUB] [-c CONFIG_FILE_PATH] [-d] [-v] [-r RECURSIVE]
+   pip install FicImageScript
 
-    Update a FicHub epub file with images.
+From GitHub Releases
+~~~~~~~~~~~~~~~~~~~~
 
-    options:
-      -h, --help            show this help message and exit
-      -p PATH_TO_EPUB, --path_to_epub PATH_TO_EPUB
-                            The path to the FicHub epub file.
-      -c CONFIG_FILE_PATH, --config_file_path CONFIG_FILE_PATH
-                            The path to the ficimage.json file.
-      -d, --debug           Enable debug mode.
-      -v, --version         Prints out the current version and quits
-      -r RECURSIVE, --recursive RECURSIVE
-                            This will update all files in the directory path given and its subdirectories
-..
+1. Download the latest release from the `FicImage GitHub Releases page
+   <https://github.com/Jemeni11/FicImage/releases>`__.
+
+2. Depending on your preference, choose one of the following installation
+   methods:
+
+   - Using the Wheel File:
+
+     .. code:: shell
+
+        pip install FicImageScript-<version>-py3-none-any.whl
+
+   - Using the Source Tarball File:
+
+     .. code:: shell
+
+        pip install FicImageScript-<version>.tar.gz
+
+   Replace ``<version>`` with the actual version number of the release.
+
+Usage
+-----
+
+After installation, run FicImage with the following command:
+
+.. code:: shell
+
+   ficimage -p path/to/file
+
+Where ``path/to/file`` is the path to the FicHub file you want to add images to.
+
+Run ``ficimage -h`` to see all available options:
+
+.. code:: shell
+
+   usage: ficimage [-h] [-p PATH] [-c CONFIG_FILE_PATH] [-V] [-v] [-r RECURSIVE] [-u] [--credits]
+
+   Update a FicHub file with images.
+
+   options:
+     -h, --help                show this help message and exit
+     -p, --path PATH           The path to the FicHub file.
+     -c, --config_file_path CONFIG_FILE_PATH
+                               The path to the ficimage.json file.
+     -V, --verbose             Enable verbose output
+     -v, --version             Prints out the current version and quits.
+     -r, --recursive RECURSIVE
+                               This will update all files in the directory path given and its subdirectories.
+     -u, --update              Check if a new version is available.
+     --credits                 Show credits and support information
+
+   Made with ❤️ by @Jemeni11 | Run --credits to learn more & show support
+
+Examples
+~~~~~~~~
+
+- **Update a single file:**
+
+  .. code:: shell
+
+     ficimage -p path/to/file.epub
+
+- **Update all files in a directory and its subdirectories:**
+
+  .. code:: shell
+
+     ficimage -r path/to/directory
+
+- **Use a custom configuration file:**
+
+  .. code:: shell
+
+     ficimage -p path/to/file.epub -c path/to/ficimage.json
+
+- **Enable verbose output for troubleshooting:**
+
+  .. code:: shell
+
+     ficimage -p path/to/file.epub -V
+
+- **Combine recursive + verbose:**
+
+  .. code:: shell
+
+     ficimage -r path/to/directory -V
+
+- **Zipped HTML with embedded images:**
+
+  .. code:: shell
+
+     ficimage -p path/to/file.zip -c path/to/ficimage.json
+
+  Ensure your ``ficimage.json`` has ``"zip_embed_images": true`` to embed
+  images as base64 in the HTML.
+
+- **Check for updates:**
+
+  .. code:: shell
+
+     ficimage -u
+
+- **Show credits and support information:**
+
+  .. code:: shell
+
+     ficimage --credits
+
+- **Display the current version:**
+
+  .. code:: shell
+
+     ficimage -v
 
 Image Support
-~~~~~~~~~~~~~
+-------------
 
-`FicHub <https://fichub.net/>`__ creates EPUB 3.3 files, which means
-that FicImage only save images in the following file format:
+FicHub EPUBs are **EPUB 3.3** files, which support these
+`image formats <https://www.w3.org/TR/epub-33/#sec-core-media-types>`__ only:
 
-- JPEG
-- PNG
-- GIF
-- WEBP
-- SVG
+- **JPEG**
+- **PNG**
+- **GIF**
+- **WEBP**
+- **SVG**
 
-See the `Core Media Types Section of the EPUB Version 3.3
-Specification <https://www.w3.org/TR/epub-33/#sec-core-media-types>`__
-for more information.
+FicImage handles them as follows:
 
-While FicImage can save SVG images, it can not compress them because
-SVGs are not supported by Pillow.
+- **Non-animated images**: Converted to WEBP by default (configurable)
+- **Animated GIF/WEBP**: |warning| Currently unsupported (processing breaks
+  animations, so FicImage skips converting/compressing them)
+- **SVG**: Saved as-is (compression not supported)
 
-FicImage uses
-`Pillow <https://pillow.readthedocs.io/en/stable/index.html>`__ for
-image manipulation and conversion.
+If an image download fails, the placeholder URL is left unchanged.
+Image processing is powered by `Pillow <https://pillow.readthedocs.io/en/stable/index.html>`__.
 
-By default, FicImage will try and save all non-animated images as JPEGs.
+**Compression behavior:**
 
-The only animated images that FicImage will save are GIFs and WEBPs.
-
-FicImage does little to no processing on GIFs and WEBPs images. This is
-to avoid breaking the animation.
-
-If FicImage can not download an image, it leaves the image url paragraph
-the same way it met it.
-
-To configure image support, you will need to create a file called
-``ficimage.json``. See the section below for more information.
+- FicImage tries to compress images below ``max_image_size`` (see
+  `Configuration Options`_), but this is not a hard guarantee
+- Very small targets (e.g., 1KB) may fail; aim for 100KB+ for reliable results
+- Compression may reduce image quality
 
 Configuration
-~~~~~~~~~~~~~
+-------------
 
-FicImage comes with a configuration file that allows you to customize
-the program to your liking.
+FicImage uses a **JSON configuration file** (``ficimage.json``) to customize
+settings.
 
-The configuration file is in the `JSON file
-format <https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON>`__
-and contains the following options:
+FicImage checks for a configuration file in the given directory path. If no
+directory path is given, FicImage checks the current directory and then the
+Operating System's home directory.
 
--  ``compress_images``: A boolean that tells FicImage whether to
-   compress images. This is only supported for ``jpeg`` and ``png``
-   images.
--  ``default_image_format``: A string that tells FicImage what default
-   format to convert and save images in. This is only supported for
-   ``jpeg`` and ``png`` images.
--  ``max_image_size``: An integer that tells FicImage the maximum size
-   of an image in bytes. If an image is larger than this value, FicImage
-   will compress it.
+The configuration file contains the following options:
 
-FicImage checks for a configuration file in the given directory path. If
-no directory path is given, FicImage checks the current directory and
-then the Operating System’s home directory.
+Configuration Options
+~~~~~~~~~~~~~~~~~~~~~
 
-If it does not find one, it uses the following defaults:
+.. list-table::
+   :header-rows: 1
+
+   * - Key
+     - Type
+     - Description
+   * - ``compress_images``
+     - boolean
+     - Whether to compress images (non-animated WEBP/JPEG/PNG only)
+   * - ``default_image_format``
+     - string
+     - Default format for converted images (non-animated WEBP/JPEG/PNG only)
+       (case-insensitive).
+   * - ``max_image_size``
+     - integer
+     - Maximum image size in bytes (triggers compression if exceeded)
+   * - ``zip_embed_images``
+     - boolean
+     - When processing zipped HTML: embed images as base64 in the HTML
+       instead of writing files to images/
+
+``zip_embed_images`` (Zipped HTML only)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Controls how FicImage stores images when the input is **zipped HTML**.
+
+- ``false`` (default): FicImage saves images as real files and writes them
+  into the output ZIP under ``images/``, then updates the HTML to reference
+  ``images/<filename>``. This makes it easy to browse/copy image files, but
+  you'll usually need to extract the ZIP to view the HTML with its images.
+
+- ``true``: FicImage embeds each image directly into the HTML as a base64
+  ``data:`` URI, so the HTML becomes self-contained (no separate image files
+  needed). This is handy for sharing a single HTML file and for conversion
+  workflows that prefer everything inline.
+
+Trade-offs:
+
+- Embedding increases output size (base64 encoding adds ~33% overhead).
+- Embedded images are harder to extract than "normal" image files.
+
+Default Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+If no configuration file is found, FicImage will use the following default
+settings:
 
 .. code:: json
 
    {
-       "compress_images": true,
-       "default_image_format": "JPEG",
-       "max_image_size": 100000
+     "compress_images": true,
+     "default_image_format": "WEBP",
+     "max_image_size": 100000,
+     "zip_embed_images": false
    }
 
-..
+Why no PDF/MOBI support?
+-------------------------
 
-   Note: The ``compress_images`` key is a boolean and can only be
-   ``true`` or ``false``. Booleans in JSON are written in lowercase.
+TL;DR: PDF and MOBI support is not planned. Use an EPUB source and convert
+with Calibre instead.
 
-   Note: If the ``default_image_format`` key does not exist, FicImage
-   will default to ``jpeg``. The two image formats are ``jpeg`` and
-   ``png``. The ``default_image_format`` key is case-insensitive.
+I originally planned to support PDF and MOBI, but after testing, I realized
+that both formats have limitations that make them unsuitable for this tool:
 
-..
+- PDF: While PDFs can contain images, they are not designed for reflowable
+  text and often have complex layouts. Extracting and replacing images in
+  PDFs is non-trivial and would require a different approach than what
+  FicImage currently uses. The best I could do was for each image, I'd have
+  to insert a new page with the image. The images could not be inserted in
+  the middle of the text, which is a dealbreaker for me. I want to keep the
+  images in their original context. Also, adding PDF support increased the
+  size of this by a lot loll (Admittedly, I could have made that an
+  optional dependency, but I didn't want to do that either).
+- MOBI: I couldn't find a python lib for this, and I didn't want to write
+  one from scratch. It also doesn't support images as well as EPUB (and
+  Zipped HTML) does.
 
-   Note: The ``compress_images`` key tells FicImage to compress images.
-   This is only supported for ``jpeg`` and ``png`` images. This also
-   goes hand-in-hand with the ``max_image_size`` key. If the
-   ``compress_images`` key is ``true`` but there’s no ``max_image_size``
-   key, FicImage will compress the image to a size less than 1MB
-   (1000000 bytes). If the ``max_image_size`` key is present, FicImage
-   will compress the image to a size less than the value of the
-   ``max_image_size`` key. The ``max_image_size`` key is in bytes.
+Really, you're better off using an EPUB source and converting it to PDF or
+MOBI with a tool like `Calibre <https://calibre-ebook.com/>`__. This way,
+you can use FicImage to add images to the EPUB, then convert it to your
+desired format.
 
-   If ``compress_images`` is ``false``, FicImage will ignore the
-   ``max_image_size`` key.
+Planned Features
+----------------
 
-..
+- ☐ **Caching** – Avoid re-downloading the same image multiple times across
+  chapters or files
+- ☐ **Concurrency** – Download multiple images at once to speed things up
+  (with proper race condition handling)
+- ☐ **Better aspect ratio handling** – Resize images while preserving their
+  original proportions more reliably
+- ☐ **Improved WebP usage** – Convert static JPEGs and PNGs to WebP for
+  better performance, instead of only using WebP for animated images
+- ☐ **Tests** – Start writing tests (sigh)
 
-   Warning: Compressing images might make the image quality worse.
+Why did I build this?
+---------------------
 
-   Warning: ``max_image_size`` is not a hard limit. FicImage will try to
-   compress the image to the size of the ``max_image_size`` key, but it
-   might not be able to compress the image to the exact size of the
-   ``max_image_size`` key.
+.. note::
 
-..
+   FicHub is a growing set of accessibility tools for reading fanfiction.
 
-   Warning: ``max_image_size`` should not be too small. For instance, if
-   you set ``max_image_size`` to 1 000, FicImage will probably not be
-   able to compress the image to 1 000 bytes (1 KB). If you set
-   ``max_image_size`` to 1 000 000, FicImage will probably be able to
-   compress the image to 1 000 000 bytes (1 MB).
+`FicHub <https://fichub.net/>`__ is great, it really is. But after one too
+many times of copying image links to open in my browser, I had to find an
+alternative. Building this tool wasn't my first thought. I initially found
+`leech.py <https://github.com/kemayo/leech>`__, but its image support was
+still a work in progress. After discovering a
+`PR <https://github.com/kemayo/leech/pull/84>`__ that added basic image
+support, I expanded on that code, which eventually became the core of what
+we now call FicImage.
 
-   Warning: FicImage will not compress GIFs or WEBPs, that might damage
-   the animation.
+The project wouldn't be where it is today without Iris (FicHub's creator),
+who helped with the finishing touches by fixing a major bug that prevented
+v1 from working properly. She also suggested making it a proper package and
+at the time, I hadn't even considered that.
 
-TODO
-----
+So thank you to Iris for both creating FicHub and helping with this
+project. Without FicHub, this tool obviously wouldn't exist (lol).
 
--  ☒ Improve logs
--  ☐ Conversion to other FicHub supported formats from ePub.
--  ☐ More testing
+Check out FicHub:
+`Website <https://fichub.net/>`__ ✦
+`GitHub <https://github.com/FicHub/fichub.net>`__ ✦
+`Discord <https://discord.gg/sByBAhX>`__
+
+Also, I've built other fanfiction tools like
+`FicRadar <https://github.com/Jemeni11/FicRadar/>`__,
+`TalesTrove <https://github.com/Jemeni11/TalesTrove>`__ and contributed to
+`WebToEpub <https://github.com/dteviot/WebToEpub>`__ and
+`Leech.py <https://github.com/kemayo/leech>`__.
 
 Contributing
 ------------
 
-Fork `this repo <https://github.com/Jemeni11/FicImage>`__ and get
-started!
+Fork the repo and get started!
 
-Links
------
+Wait a minute, who are you?
+---------------------------
 
--  Me
+`FicImage <https://pypi.org/project/FicImageScript/>`__ was built by
+Emmanuel Jemeni, a Frontend Developer with a passion for Python.
 
-   `LinkedIn <https://www.linkedin.com/in/emmanuel-jemeni>`__ •
-   `GitHub <https://github.com/Jemeni11>`__ •
-   `Twitter <https://twitter.com/Jemeni11_>`__
+You can find me on various platforms:
 
--  FicHub
+- `LinkedIn <https://www.linkedin.com/in/emmanuel-jemeni>`__
+- `GitHub <https://github.com/Jemeni11>`__
+- `BlueSky <https://bsky.app/profile/jemeni11.bsky.social>`__
+- `Twitter <https://twitter.com/Jemeni11_>`__
 
-   `Website <https://fichub.net/>`__ •
-   `GitHub <https://github.com/FicHub/fichub.net>`__ •
-   `Discord <https://discord.gg/sByBAhX>`__
+If you'd like, you can support me on
+`GitHub Sponsors <https://github.com/sponsors/Jemeni11/>`__ or
+`Buy Me A Coffee <https://www.buymeacoffee.com/jemeni11>`__.
 
-   Without FicHub, this project would (obviously lol) not exist.
+License
+-------
 
-   Thanks to `iris <https://github.com/iridescent-beacon>`__ for helping
-   me with this project as well.
+`MIT LICENSE <https://github.com/Jemeni11/FicImage/blob/main/LICENSE>`__
+
+Changelog
+---------
+
+`Changelog <https://github.com/Jemeni11/FicImage/blob/main/CHANGELOG.md>`__
+
+
+.. |PyPI Downloads| image:: https://static.pepy.tech/personalized-badge/ficimagescript?period=total&units=NONE&left_color=GREY&right_color=BLUE&left_text=PyPI+downloads
+   :alt: PyPI Downloads
+   :target: https://pepy.tech/projects/ficimagescript
+
+.. |warning| unicode:: U+26A0 U+FE0F

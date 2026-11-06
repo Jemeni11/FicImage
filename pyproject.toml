@@ -1,45 +1,70 @@
 [project]
 name = "FicImageScript"
-version = "4.1.1"
+version = "5.0.0"
 authors = [
-    { name = "Emmanuel C. Jemeni", email = "jemenichinonso11@gmail.com" }
+    { name = "Emmanuel C. Jemeni", email = "jemenichinonso11@gmail.com" },
 ]
-description = "FicImage is an application designed to enhance the reading experience of FicHub epubs."
+description = "FicImage is an application designed to enhance the reading experience of FicHub files."
 readme = "PYPI_README.rst"
-requires-python = ">=3.6"
-license = { file = "LICENSE" }
-keywords = ["fanfiction", "fichub", "ficimage", "image"]
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["fanfiction", "fichub", "ficimage", "image", "epub", "html", "zip"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Internet :: WWW/HTTP",
+    "Environment :: Console",
+    "Natural Language :: English",
 ]
 dependencies = [
-    'beautifulsoup4>=4.12.2',
-    'certifi>=2022.12.7',
-    'charset-normalizer>=3.1.0',
-    'EbookLib>=0.18',
-    'idna>=3.4',
-    'lxml>=4.9.2',
-    'Pillow>=9.5.0',
-    'requests>=2.31.0',
-    'six>=1.16.0',
-    'soupsieve>=2.4.1',
-    'urllib3>=1.26.15'
+    "beautifulsoup4>=4.15.0",
+    "ebooklib>=0.20",
+    "httpx>=0.28.1",
+    "lxml>=6.1.1",
+    "packaging>=26.2",
+    "pillow>=13.0.0",
 ]
 
-[project.scripts]  # Optional
-ficimage = "FicImageScript.main:main"
+[project.scripts]
+ficimage = "ficimagescript.main:main"
 
 [project.urls]
 "Homepage" = "https://github.com/Jemeni11/FicImage"
 "Bug Tracker" = "https://github.com/Jemeni11/FicImage/issues"
+"Changelog" = "https://github.com/Jemeni11/FicImage/blob/main/CHANGELOG.md"
+"Funding" = "https://buymeacoffee.com/jemeni11"
 
 [build-system]
-# These are the assumed default build requirements from pip:
-# https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
-#requires = ["setuptools>=43.0.0", "wheel"]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.11.23,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["ruff>=0.15.19", "ty>=0.0.98"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = [
+    "F",    # Pyflakes rules
+    "W",    # PyCodeStyle warnings
+    "E",    # PyCodeStyle errors
+    "I",    # Sort imports properly
+    "UP",   # Warn if certain things can changed due to newer Python versions
+    "C4",   # Catch incorrect use of comprehensions, dict, list, etc
+    "ISC",  # Good use of string concatenation
+    "ICN",  # Use common import conventions
+    "RET",  # Good return practices
+    "SIM",  # Common simplification rules
+    "TID",  # Some good import practices
+    "TC",   # Enforce importing certain types in a TYPE_CHECKING block
+    "PTH",  # Use pathlib instead of os.path
+    "TD",   # Be diligent with TODO comments
+    "FURB", # Suggest more idiomatic Python patterns
+    "B",    # https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+]
+
+[tool.ty.rules]
+import-not-found = "warn"
