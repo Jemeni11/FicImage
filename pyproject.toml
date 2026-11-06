@@ -67,4 +67,4 @@ extend-select = [
 ]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
